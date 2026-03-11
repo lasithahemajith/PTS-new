@@ -11,11 +11,8 @@ RUN npm install --production
 # Copy source code
 COPY . .
 
-# ✅ Explicitly copy the .env file into the image
-COPY .env .env
-
-# ✅ Generate Prisma client
-RUN npx prisma generate
+# Ensure uploads directory exists
+RUN mkdir -p uploads/logpapers
 
 EXPOSE 5000
 

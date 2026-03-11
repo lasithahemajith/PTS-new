@@ -6,35 +6,44 @@ A full-stack web application designed to streamline practicum tracking, feedback
 
 ## 🧭 Overview
 
-This system helps EIT’s School of Computing manage practicum activities for Mental Health & Addiction students.  
+This system helps EIT's School of Computing manage practicum activities for Mental Health & Addiction students.
 It allows students to log practicum hours, mentors to verify logs and provide feedback, and tutors to monitor overall student progress — all in one central dashboard.
 
 ---
 
 ## 🧩 Project Structure
 
-
-EIT_Pratictum_Tracking_System/
-├── backend/ # Node.js + Express + Prisma + MySQL + MongoDB
-│ ├── prisma/ # Prisma schema & migrations
-│ ├── src/
-│ │ ├── routes/ # API endpoints
-│ │ ├── controllers/ # Business logic
-│ │ ├── middlewares/ # Auth, error handlers
-│ │ └── server.js # Main Express entry point
-│ └── package.json
+```
+PTS-new/
+├── BE/                    # Backend (Node.js + Express + Mongoose + MongoDB)
+│   ├── src/
+│   │   ├── app.js         # Express entry point
+│   │   ├── config/        # Database configuration
+│   │   ├── controllers/   # Business logic
+│   │   ├── middlewares/   # Auth & role middleware
+│   │   ├── models/        # Mongoose models
+│   │   ├── routes/        # API endpoints
+│   │   ├── seeds/         # Database seeding scripts
+│   │   ├── services/      # Service layer
+│   │   └── utils/         # JWT utilities
+│   ├── uploads/           # File upload storage
+│   ├── .env.example       # Environment variable template
+│   ├── Dockerfile
+│   └── package.json
 │
-├── frontend/ # React + Vite + Redux Toolkit + TailwindCSS
-│ ├── src/
-│ │ ├── api/ # Axios setup & interceptors
-│ │ ├── components/ # Reusable UI components
-│ │ ├── context/ # Auth context (Tutor / Mentor / Student)
-│ │ ├── pages/ # All main pages
-│ │ └── App.jsx # Root app
-│ └── package.json
+├── FE/                    # Frontend (React + Vite + TailwindCSS)
+│   ├── src/
+│   │   ├── api/           # Axios setup & interceptors
+│   │   ├── components/    # Reusable UI components
+│   │   ├── context/       # Auth context (Tutor / Mentor / Student)
+│   │   ├── pages/         # All main pages
+│   │   └── App.jsx        # Root app
+│   ├── Dockerfile
+│   └── package.json
 │
+├── docker-compose.yml
 └── README.md
-
+```
 
 ---
 
@@ -42,19 +51,34 @@ EIT_Pratictum_Tracking_System/
 
 ### Backend
 - **Node.js + Express.js**
-- **Prisma ORM** with **MySQL**
-- **MongoDB** for log papers & feedback
+- **MongoDB** with **Mongoose ODM** (single database for all data)
 - **JWT Authentication**
-- **bcrypt** for password hashing
-- **dotenv**, **multer**
+- **bcryptjs** for password hashing
+- **dotenv**, **multer** for env config and file uploads
+- **exceljs** / **json2csv** for report exports
 
 ### Frontend
 - **React + Vite**
-- **Redux Toolkit**
 - **TailwindCSS**
 - **Framer Motion**
 - **Axios**
-- **React Router v6**
+- **React Router v7**
+- **Zustand** for state management
+
+---
+
+## 🗄️ Database Architecture (MongoDB Only)
+
+All data is stored in a single MongoDB database with the following collections:
+
+| Collection | Purpose |
+|------------|---------|
+| `users` | User accounts (Students, Mentors, Tutors) |
+| `mentorstudentmaps` | Mentor ↔ Student assignments |
+| `attendances` | Class & Practicum attendance records |
+| `logpapers` | Practicum activity logs with file attachments |
+| `mentorfeedbacks` | Mentor feedback on log papers |
+| `tutorfeedbacks` | Tutor evaluations on log papers |
 
 ---
 
@@ -62,389 +86,242 @@ EIT_Pratictum_Tracking_System/
 
 | Role | Features |
 |------|-----------|
-| **Student** | Submit practicum logs, view feedback, track hours |
-| **Mentor** | Review logs, verify and comment, approve/reject |
-| **Tutor (Super Admin)** | Manage users, assign mentors, view overall reports |
+| **Student** | Submit practicum logs, view feedback, track hours, record attendance |
+| **Mentor** | Review & verify logs, comment, view assigned students' attendance |
+| **Tutor (Admin)** | Manage users, assign mentors, view reports, export data |
 
------------------------------------------------------------------------
------------------------------------------------------------------------
+---
 
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+## 🚀 Local Setup Guide
 
-🧑‍💻 Practicum Tracking System (PTS) – Local Deployment Guide
+### 📌 1. Prerequisites
 
---------------------
+Install the following before running the project:
 
-The Practicum Tracking System (PTS) is a full-stack web application built with:
+- **Node.js (LTS)** → https://nodejs.org/
+- **Git** → https://git-scm.com/
+- **MongoDB Community Edition** → https://www.mongodb.com/try/download/community
 
-🧱 Node.js (Backend)
-
-⚡ Prisma ORM
-
-🗄️ MySQL (Relational Database)
-
-🍃 MongoDB (Document Database)
-
-🖥️ Vite + React (Frontend)
-
-⚠️ Important: Both MySQL and MongoDB must be running locally before starting the backend.
-
--------------------------------
-📌 1️⃣ Prerequisites
-
-Before running the project, install the following:
-
-✅ Node.js (LTS)
-
-Download:
-👉 https://nodejs.org/
-
-Verify installation:
-
+Verify installations:
+```bash
 node -v
 npm -v
-
-✅ Git
-
-Download:
-👉 https://git-scm.com/
-
-Verify:
-
 git --version
+mongod --version
+```
 
-✅ MySQL
+---
 
-Install MySQL Community Server.
+### 📥 2. Clone the Repository
 
-During installation:
-
-Username: root
-
-Password: root
-(Must match your .env)
-
-MySQL runs on:
-
-localhost:3306
-
-✅ MongoDB
-
-Install MongoDB Community Edition.
-
-Default runs on:
-
-mongodb://127.0.0.1:27017
-
----------------------------------------
-📥 2️⃣ Clone the Repository
-
+```bash
 git clone <your-repository-url>
+cd PTS-new
+```
 
-cd PTS
+---
 
--------------------------------
-🗄️ 3️⃣ Database Setup
+### 🍃 3. MongoDB Setup
 
-PTS uses a hybrid database architecture:
+MongoDB is the **only** database used in this project.
 
-Database	Purpose
-MySQL	Users, Roles, Attendance, Evaluations
-MongoDB	Log papers, file metadata, documents
+**Start MongoDB service:**
 
-🔵 MySQL Setup
-
-Step 1 — Start MySQL Service (Windows)
-
-Press:
-
-Win + R → services.msc
-
-
-Ensure MySQL80 is running.
-
-Or start manually:
-
-net start MySQL80
-
-Step 2 — Create Database
-
-Open MySQL CLI:
-
-mysql -u root -p
-
-
-Enter password:
-
-root
-
-
-Run:
-
-CREATE DATABASE practicum;
-
-
-Verify:
-
-SHOW DATABASES;
-
-
-You should see:
-
-practicum
-
-🟢 MongoDB Setup
-
-Step 1 — Start MongoDB Service
-
-Press:
-
-Win + R → services.msc
-
-
-Ensure MongoDB service is running.
-
-Or start manually:
-
+**Windows:**
+```
+Win + R → services.msc → Ensure "MongoDB" service is running
+```
+Or manually:
+```bash
 net start MongoDB
+```
 
-Step 2 — Verify MongoDB
+**macOS / Linux:**
+```bash
+brew services start mongodb-community
+# or
+sudo systemctl start mongod
+```
 
-Open terminal:
-
+**Verify MongoDB is running:**
+```bash
 mongosh
+```
+MongoDB will automatically create the `practicum` database when first used.
 
+---
 
-Switch to project database:
+### 🧱 4. Backend Setup (`/BE`)
 
-use practicum
+**Step 1 — Navigate to backend:**
+```bash
+cd BE
+```
 
-
-MongoDB creates the database automatically when first used.
-
----------------------------------
----------------------------------
-
-🧱 4️⃣ Backend Setup (/be)
-
-Step 1 — Navigate to Backend
-
-cd be
-
-Step 2 — Install Dependencies
-
+**Step 2 — Install dependencies:**
+```bash
 npm install
+```
 
-Step 3 — Configure Environment Variables
+**Step 3 — Configure environment variables:**
 
-Create a file named .env inside /be:
+Create a `.env` file inside `/BE`:
+```env
+PORT=5000
+JWT_SECRET=your_jwt_secret_here
+MONGODB_URI=mongodb://127.0.0.1:27017/practicum
+UPLOAD_PATH=uploads/logpapers
+SUPERADMIN_EMAIL=admin@eit.ac.nz
+SUPERADMIN_PASSWORD=Admin@123
+```
 
-------------------------------------
-🔐 Environment Variables Setup
+> See `.env.example` for the template.
 
-This project uses environment variables for configuration.
+**Step 4 — Create uploads directory:**
+```bash
+mkdir -p uploads/logpapers
+```
 
-You must create a local .env file before running the backend.
-
-📄 .env.example (Template File)
-
-This file is a template
-
-It shows which environment variables are required
-
-It does NOT contain real credentials
-
-It is safe to commit to GitHub
-
-⚠️ Do NOT edit this file.
-
-🔒 .env (Your Local Configuration)
-
-You must create this file manually inside the backend folder.
-
-Path:
-
-PTS/be/.env
-
-
-This file contains real credentials and must NOT be pushed to GitHub.
-
------------------------------------------
-⚠️ Ensure:
-
-MySQL is running
-
-MongoDB is running
-
-practicum database exists in MySQL
-
-----------------------------------------
-⚙️ 5️⃣ Prisma Setup (MySQL)
-
-Run:
-
-npx prisma generate
-
-npx prisma migrate dev --name init
-
-
-This will:
-
-Create all relational tables
-
-Sync Prisma schema with MySQL
-
-------------------------------------
-👤 6️⃣ Seed Super Admin
-
-Run:
-
-npx prisma db seed
-
+**Step 5 — Seed the super admin account:**
+```bash
+npm run seed
+```
 
 This creates the default admin account:
+- **Email:** `admin@eit.ac.nz`
+- **Password:** `Admin@123`
 
-Email: admin@eit.ac.nz
-
-Password: Admin@123
-
------------------------------------------
-📂 7️⃣ Create Upload Folder
-
-Inside backend folder:
-
-mkdir -p uploads/logpapers
-
-
-Required for:
-
-UPLOAD_PATH=uploads/logpapers
-
---------------------------------------------
-▶️ 8️⃣ Run Backend
-
+**Step 6 — Start the backend:**
+```bash
 npm run dev
+```
 
+Backend runs at: **http://localhost:5000**
 
-Backend runs at:
+---
 
-http://localhost:5000
+### 🖥️ 5. Frontend Setup (`/FE`)
 
+Open a new terminal:
 
-You should see:
+**Step 1 — Navigate to frontend:**
+```bash
+cd FE
+```
 
-Server running on port 5000
-
-------------------------------------------
-🖥️ 9️⃣ Frontend Setup (/fe)
-
-Open a new terminal.
-
-Step 1 — Navigate to Frontend
-
-cd fe
-
-Step 2 — Install Dependencies
-
+**Step 2 — Install dependencies:**
+```bash
 npm install
+```
 
-Step 3 — Configure Frontend Environment
+**Step 3 — Configure frontend environment:**
 
-Create .env inside /fe:
-
+Create a `.env` file inside `/FE`:
+```env
 VITE_API_URL=http://localhost:5000
+```
 
-Step 4 — Run Frontend
-
+**Step 4 — Start the frontend:**
+```bash
 npm run dev
+```
 
+Frontend runs at: **http://localhost:5173**
 
-Frontend runs at:
+---
 
-http://localhost:5173
+### 🔐 Default Login Credentials
 
+| Field | Value |
+|-------|-------|
+| Email | `admin@eit.ac.nz` |
+| Password | `Admin@123` |
 
-Open in your browser.
+---
 
-🔐 Default Login
+## 🐳 Docker Deployment
 
-Email: admin@eit.ac.nz
+To run the entire stack with Docker:
 
-Password: Admin@123
+```bash
+# Ensure ./BE/.env exists and is configured
+docker-compose up --build
+```
 
+Services started:
+- **MongoDB** on port `27017`
+- **Backend** on port `5000`
+- **Frontend** on port `80`
 
-------------------------------------------------------------------
-🧹 Git Hygiene
+---
 
-Do NOT push these files:
+## 🧹 Git Hygiene
 
-.env
+These files should **not** be committed (already in `.gitignore`):
+```
 node_modules/
+.env
 uploads/
-.db
-.sql
-.pem
-.crt
-.key
+```
 
+---
 
-Ensure they are included in .gitignore.
+## 🚨 Common Issues & Fixes
 
-------------------------------
----------------------------------
-🚨 Common Issues & Fixes
-❌ MySQL Connection Error
+### ❌ MongoDB Not Connecting
+- Ensure MongoDB service is running
+- Check `MONGODB_URI` in `.env`
+- Default port is `27017`
 
-✔ Check MySQL is running
-✔ Confirm username/password = root/root
-✔ Confirm database = practicum
+### ❌ Port 5000 Already in Use
 
-❌ MongoDB Not Connecting
+Find and stop the process using port 5000 in your OS task manager or terminal.
 
-✔ Ensure MongoDB service is running
-✔ Check port 27017
+### ❌ Upload Folder Missing
+```bash
+mkdir -p BE/uploads/logpapers
+```
 
-❌ Prisma Migration Error
+### ❌ Seed fails
+- Ensure `MONGODB_URI` is set in `.env`
+- Ensure MongoDB is running before seeding
 
-Reset database:
+---
 
-npx prisma migrate reset
+## 💡 MySQL Migration Note
 
-❌ Port 5000 Already in Use
+This project was migrated from a hybrid MySQL + MongoDB architecture to **MongoDB-only**.
+If you have existing data in MySQL, you can export it with:
 
-Find process:
+```bash
+mysqldump -u root -p practicum > practicum_backup.sql
+```
 
-lsof -i :5000
+Then manually migrate the following records to MongoDB:
 
+| MySQL Table | MongoDB Collection |
+|-------------|-------------------|
+| `User` | `users` |
+| `MentorStudentMap` | `mentorstudentmaps` |
+| `Attendance` | `attendances` |
 
-Kill process:
+You can use **MongoDB Compass** or write a one-off migration script to import the data.
+Note that user IDs change from integers to ObjectId strings after migration —
+update any foreign key references accordingly.
 
-kill -9 <PID>
+---
 
+## ✅ Setup Checklist
 
-------------------------
------------------------
-✅ Final Checklist
+- [ ] Node.js installed
+- [ ] MongoDB running
+- [ ] `.env` file configured in `/BE`
+- [ ] `npm install` run in `/BE`
+- [ ] `npm run seed` run to create super admin
+- [ ] Uploads folder created (`BE/uploads/logpapers`)
+- [ ] Backend running (`http://localhost:5000`)
+- [ ] `.env` file configured in `/FE` (`VITE_API_URL=http://localhost:5000`)
+- [ ] `npm install` run in `/FE`
+- [ ] Frontend running (`http://localhost:5173`)
 
- Node.js installed
-
- MySQL running
-
- MongoDB running
-
- practicum DB created in MySQL
-
- .env configured
-
- Prisma migration completed
-
- Super Admin seeded
-
- Upload folder created
-
- Backend running (localhost:5000)
-
- Frontend running (localhost:5173)
-
---------------------------------
 Your PTS system should now be running locally 🎉

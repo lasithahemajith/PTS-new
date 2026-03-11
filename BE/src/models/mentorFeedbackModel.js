@@ -3,8 +3,8 @@ import mongoose from "mongoose";
 const mentorFeedbackSchema = new mongoose.Schema(
   {
     logPaperId: { type: mongoose.Schema.Types.ObjectId, ref: "LogPaper", required: true },
-    mentorId: { type: Number, required: true }, // MySQL mentor user ID
-    studentId: { type: Number, required: true }, // MySQL student user ID
+    mentorId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    studentId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     comment: { type: String, required: true },
     approved: { type: Boolean, default: false },
   },
