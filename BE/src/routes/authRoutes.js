@@ -1,0 +1,10 @@
+import express from "express";
+import { registerUser, loginUser } from "../controllers/authController.js";
+
+const router = express.Router();
+
+router.post("/register", registerUser);
+router.post("/login", loginUser);
+//router.get('/profile', verifyToken, (req, res) => getProfile(req, res, prisma));
+
+export default router;

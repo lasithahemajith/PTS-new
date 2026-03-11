@@ -1,0 +1,4 @@
+ALTER TABLE `User`
+  ADD COLUMN `phone` VARCHAR(191),
+  ADD COLUMN `studentIndex` VARCHAR(191) UNIQUE,
+  ADD COLUMN `company` VARCHAR(191);
