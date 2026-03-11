@@ -1,12 +1,10 @@
-import { PrismaClient } from "@prisma/client";
+import Attendance from "../models/attendanceModel.js";
 import LogPaper from "../models/logPaperModel.js";
 import MentorFeedback from "../models/mentorFeedbackModel.js";
 import TutorFeedback from "../models/tutorFeedbackModel.js";
 
-const prisma = new PrismaClient();
-
 /* -------------------------------------------------------------------------- */
-/*  1️⃣ Attendance Overview – Prisma (MySQL)                                   */
+/*  1. Attendance Overview – MongoDB                                           */
 /* -------------------------------------------------------------------------- */
 export const getAttendanceOverview = async (req, res) => {
   try {
@@ -14,24 +12,21 @@ export const getAttendanceOverview = async (req, res) => {
       return res.status(403).json({ error: "Access denied" });
 
     const { from, to, type } = req.query;
-    const where = {};
+    const filter = {};
 
     if (from || to) {
-      where.createdAt = {};
-      if (from) where.createdAt.gte = new Date(from);
-      if (to) where.createdAt.lte = new Date(to);
+      filter.createdAt = {};
+      if (from) filter.createdAt.$gte = new Date(from);
+      if (to) filter.createdAt.$lte = new Date(to);
     }
 
-    if (type && type !== "All") where.type = type;
+    if (type && type !== "All") filter.type = type;
 
-    const attendance = await prisma.attendance.findMany({
-      where,
-      include: { student: { select: { id: true, name: true } } },
-    });
+    const attendance = await Attendance.find(filter).populate("studentId", "name");
 
     const grouped = {};
     attendance.forEach((a) => {
-      const s = a.student?.name || "Unknown";
+      const s = a.studentId?.name || "Unknown";
       if (!grouped[s])
         grouped[s] = { attended: 0, missed: 0, total: 0, type: a.type };
       if (a.attended === "Yes") grouped[s].attended++;
@@ -57,7 +52,7 @@ export const getAttendanceOverview = async (req, res) => {
 };
 
 /* -------------------------------------------------------------------------- */
-/*  2️⃣ Practicum Log Summary – MongoDB (LogPaper)                            */
+/*  2. Practicum Log Summary – MongoDB (LogPaper)                             */
 /* -------------------------------------------------------------------------- */
 export const getLogSummary = async (req, res) => {
   try {
@@ -115,7 +110,7 @@ export const getLogSummary = async (req, res) => {
 };
 
 /* -------------------------------------------------------------------------- */
-/*  3️⃣ Student Progress Tracker – Prisma + Mongo combo                       */
+/*  3. Student Progress Tracker – MongoDB                                     */
 /* -------------------------------------------------------------------------- */
 export const getStudentProgress = async (req, res) => {
   try {
@@ -124,36 +119,32 @@ export const getStudentProgress = async (req, res) => {
 
     const { from, to, minHours, minLogs } = req.query;
 
-    const attendance = await prisma.attendance.findMany({
-      include: { student: { select: { id: true, name: true } } },
-    });
-
+    const attendanceFilter = {};
     const logFilter = {};
     if (from || to) {
-      logFilter.createdAt = {};
-      if (from) logFilter.createdAt.$gte = new Date(from);
-      if (to) logFilter.createdAt.$lte = new Date(to);
+      const dateFilter = {};
+      if (from) dateFilter.$gte = new Date(from);
+      if (to) dateFilter.$lte = new Date(to);
+      attendanceFilter.createdAt = dateFilter;
+      logFilter.createdAt = dateFilter;
     }
 
-    const logs = await LogPaper.find(logFilter);
+    const attendance = await Attendance.find(attendanceFilter).populate("studentId", "name");
+    const logs = await LogPaper.find(logFilter).populate("studentId", "name");
 
     const progress = {};
 
     attendance.forEach((a) => {
-      const name = a.student?.name || "Unknown";
+      const name = a.studentId?.name || "Unknown";
       if (!progress[name])
         progress[name] = { attendanceDays: 0, logsSubmitted: 0, totalHours: 0 };
       if (a.attended === "Yes") progress[name].attendanceDays++;
     });
 
     logs.forEach((l) => {
-      const studentId = l.studentId;
-      const matched = attendance.find((a) => a.studentId === studentId);
-      const name = matched?.student?.name || `Student #${studentId}`;
-
+      const name = l.studentId?.name || `Student #${l.studentId}`;
       if (!progress[name])
         progress[name] = { attendanceDays: 0, logsSubmitted: 0, totalHours: 0 };
-
       progress[name].logsSubmitted++;
       progress[name].totalHours += Number(l.totalHours || 0);
     });

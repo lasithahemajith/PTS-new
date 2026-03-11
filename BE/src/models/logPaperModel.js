@@ -2,8 +2,9 @@ import mongoose from "mongoose";
 
 const logPaperSchema = new mongoose.Schema(
   {
-    studentId: { type: Number, required: true }, // MySQL user ID (from Prisma)
-    mentorId: { type: Number },
+    studentId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    mentorId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    tutorId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     date: { type: Date, required: true },
     startTime: { type: String },
     endTime: { type: String },
@@ -26,6 +27,8 @@ const logPaperSchema = new mongoose.Schema(
       enum: ["Pending", "Verified", "Reviewed"],
       default: "Pending",
     },
+    verifiedAt: { type: Date },
+    reviewedAt: { type: Date },
   },
   { timestamps: true }
 );

@@ -1,14 +1,12 @@
 import LogPaper from "../models/logPaperModel.js";
+import MentorStudentMap from "../models/mentorStudentMapModel.js";
 import path from "path";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
 
 /* =========================================================
    STUDENT SIDE
    ========================================================= */
 
-// ✅ CREATE Log Paper
+// CREATE Log Paper
 export const createLogPaper = async (req, res) => {
   try {
     console.log("📩 Incoming form data:", req.body);
@@ -52,30 +50,24 @@ export const createLogPaper = async (req, res) => {
   }
 };
 
-// ✅ GET Logs for Current User (role-based)
+// GET Logs for Current User (role-based)
 export const getMyLogPapers = async (req, res) => {
   try {
     const role = req.user.role;
 
-    // 🧑‍🎓 Student → only their own logs
     if (role === "Student") {
       const logs = await LogPaper.find({ studentId: req.user.id }).sort({ date: -1 });
       return res.json(logs);
     }
 
-    // 👨‍🏫 Tutor/Admin → all logs
     if (role === "Tutor" || role === "Admin") {
       const logs = await LogPaper.find().sort({ date: -1 });
       return res.json(logs);
     }
 
-    // 👨‍💼 Mentor → only assigned students
     if (role === "Mentor") {
       const mentorId = req.user.id;
-      const mappings = await prisma.mentorStudentMap.findMany({
-        where: { mentorId },
-        select: { studentId: true },
-      });
+      const mappings = await MentorStudentMap.find({ mentorId }).select("studentId");
       const studentIds = mappings.map((m) => m.studentId);
       if (studentIds.length === 0) return res.json([]);
 
@@ -94,7 +86,7 @@ export const getMyLogPapers = async (req, res) => {
    MENTOR SIDE
    ========================================================= */
 
-// ✅ MENTOR Verifies Log
+// MENTOR Verifies Log
 export const verifyLogPaper = async (req, res) => {
   try {
     const { id } = req.params;
@@ -124,7 +116,7 @@ export const verifyLogPaper = async (req, res) => {
    TUTOR SIDE
    ========================================================= */
 
-// ✅ TUTOR Adds Feedback
+// TUTOR Adds Feedback
 export const addTutorFeedback = async (req, res) => {
   try {
     const { id } = req.params;
@@ -154,7 +146,7 @@ export const addTutorFeedback = async (req, res) => {
    GENERAL ACCESS
    ========================================================= */
 
-// ✅ GET ALL Logs (Tutor/Admin)
+// GET ALL Logs (Tutor/Admin)
 export const getAllLogs = async (req, res) => {
   try {
     if (req.user.role !== "Tutor" && req.user.role !== "Admin") {
@@ -181,11 +173,7 @@ export const getMentorLogs = async (req, res) => {
 
     const mentorId = req.user.id;
 
-    const mappings = await prisma.mentorStudentMap.findMany({
-      where: { mentorId },
-      select: { studentId: true },
-    });
-
+    const mappings = await MentorStudentMap.find({ mentorId }).select("studentId");
     const studentIds = mappings.map((m) => m.studentId);
     if (studentIds.length === 0) return res.json([]);
 
@@ -200,7 +188,7 @@ export const getMentorLogs = async (req, res) => {
   }
 };
 
-// ✅ Single Log by ID
+// Single Log by ID
 export const getLogPaperById = async (req, res) => {
   try {
     const { id } = req.params;

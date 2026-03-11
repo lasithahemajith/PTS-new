@@ -1,22 +1,22 @@
 import TutorFeedback from "../models/tutorFeedbackModel.js";
 import LogPaper from "../models/logPaperModel.js";
 
-// ✅ Add tutor feedback (saved separately; does NOT change status)
+// Add tutor feedback (saved separately; does NOT change status)
 export const addTutorFeedback = async (req, res) => {
   try {
     const { id } = req.params; // LogPaper ID
     const { feedback } = req.body;
 
-    // Create tutor feedback entry (multiple feedbacks allowed)
+    const log = await LogPaper.findById(id);
+    if (!log) return res.status(404).json({ error: "Log not found" });
+
     const savedFeedback = await TutorFeedback.create({
       logPaperId: id,
       tutorId: req.user.id,
-      studentId: req.user.id, // You can later change to real studentId if needed
+      studentId: log.studentId,
       feedback,
     });
 
-    // ❌ Do NOT change LogPaper status here (per your request)
-    // Just keep last feedback content updated
     await LogPaper.findByIdAndUpdate(id, {
       tutorFeedback: feedback,
       tutorId: req.user.id,
@@ -32,7 +32,7 @@ export const addTutorFeedback = async (req, res) => {
   }
 };
 
-// ✅ Get all tutor feedback for a single log
+// Get all tutor feedback for a single log
 export const getTutorFeedbacks = async (req, res) => {
   try {
     const { id } = req.params;
@@ -44,7 +44,7 @@ export const getTutorFeedbacks = async (req, res) => {
   }
 };
 
-// ✅ Get all tutor feedbacks (admin/tutor summary view)
+// Get all tutor feedbacks (admin/tutor summary view)
 export const getAllTutorFeedbacks = async (req, res) => {
   try {
     const feedbacks = await TutorFeedback.find().sort({ createdAt: -1 });
@@ -55,7 +55,7 @@ export const getAllTutorFeedbacks = async (req, res) => {
   }
 };
 
-// ✅ Mark a LogPaper as Reviewed (only for button click)
+// Mark a LogPaper as Reviewed (only for button click)
 export const markAsReviewed = async (req, res) => {
   try {
     const { id } = req.params;
@@ -64,7 +64,6 @@ export const markAsReviewed = async (req, res) => {
       return res.status(400).json({ error: "LogPaper ID is required" });
     }
 
-    // Update the LogPaper status only when button clicked
     const updated = await LogPaper.findByIdAndUpdate(
       id,
       {
