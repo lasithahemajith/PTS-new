@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
+import mongoose from "mongoose";
 import User from "../models/userModel.js";
 import MentorStudentMap from "../models/mentorStudentMapModel.js";
 
@@ -88,6 +89,11 @@ export const mapMentorToStudent = async (req, res) => {
     if (!mentorId || !studentId)
       return res.status(400).json({ error: "mentorId and studentId required" });
 
+    if (!mongoose.Types.ObjectId.isValid(mentorId))
+      return res.status(400).json({ error: "Invalid mentorId" });
+    if (!mongoose.Types.ObjectId.isValid(studentId))
+      return res.status(400).json({ error: "Invalid studentId" });
+
     const mentor = await User.findById(mentorId);
     const student = await User.findById(studentId);
 
@@ -129,6 +135,11 @@ export const unmapMentorFromStudent = async (req, res) => {
     const { mentorId, studentId } = req.body;
     if (!mentorId || !studentId)
       return res.status(400).json({ error: "mentorId and studentId required" });
+
+    if (!mongoose.Types.ObjectId.isValid(mentorId))
+      return res.status(400).json({ error: "Invalid mentorId" });
+    if (!mongoose.Types.ObjectId.isValid(studentId))
+      return res.status(400).json({ error: "Invalid studentId" });
 
     await MentorStudentMap.findOneAndDelete({ mentorId, studentId });
 
