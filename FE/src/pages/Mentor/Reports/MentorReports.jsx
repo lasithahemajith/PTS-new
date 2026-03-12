@@ -6,9 +6,9 @@ export default function MentorReports() {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("Pending");
+  const [search, setSearch] = useState("");
   const navigate = useNavigate();
 
-  // ✅ Updated tabs to match your statuses
   const tabs = ["Pending", "Verified", "All"];
 
   useEffect(() => {
@@ -29,15 +29,25 @@ export default function MentorReports() {
   }, []);
 
   const filtered = logs.filter((l) => {
-    if (activeTab === "All") return true;
-    if (activeTab === "Pending") return l.status === "Pending";
-    if (activeTab === "Verified") return l.status === "Verified";
-    return true;
+    const matchesTab =
+      activeTab === "All" ||
+      (activeTab === "Pending" && l.status === "Pending") ||
+      (activeTab === "Verified" && l.status === "Verified");
+
+    const studentName = l.studentId?.name || "";
+    const studentIndex = l.studentId?.studentIndex || "";
+    const q = search.trim().toLowerCase();
+    const matchesSearch =
+      !q ||
+      studentName.toLowerCase().includes(q) ||
+      studentIndex.toLowerCase().includes(q);
+
+    return matchesTab && matchesSearch;
   });
 
   return (
     <div className="p-6">
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex flex-wrap items-center gap-3 mb-6">
         {tabs.map((t) => (
           <button
             key={t}
@@ -51,6 +61,13 @@ export default function MentorReports() {
             {t}
           </button>
         ))}
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by student name or index…"
+          className="ml-auto border border-gray-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 w-64"
+        />
       </div>
 
       <div className="bg-white rounded-xl shadow overflow-hidden">
@@ -58,6 +75,7 @@ export default function MentorReports() {
           <thead className="bg-gray-50">
             <tr>
               <th className="p-3 text-left">Student</th>
+              <th className="p-3 text-left">Index</th>
               <th className="p-3 text-left">Date</th>
               <th className="p-3 text-left">Activity</th>
               <th className="p-3 text-left">Hours</th>
@@ -68,20 +86,23 @@ export default function MentorReports() {
           <tbody>
             {loading ? (
               <tr>
-                <td className="p-4" colSpan={6}>
+                <td className="p-4" colSpan={7}>
                   Loading...
                 </td>
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
-                <td className="p-4 text-gray-500" colSpan={6}>
-                  No logs in this tab.
+                <td className="p-4 text-gray-500" colSpan={7}>
+                  {search.trim()
+                    ? "No logs match your search."
+                    : "No logs in this tab."}
                 </td>
               </tr>
             ) : (
               filtered.map((log) => (
                 <tr key={log._id} className="border-t">
-                  <td className="p-3">{log.studentName || log.studentId}</td>
+                  <td className="p-3">{log.studentId?.name || "—"}</td>
+                  <td className="p-3">{log.studentId?.studentIndex || "—"}</td>
                   <td className="p-3">
                     {new Date(log.date).toLocaleDateString()}
                   </td>
@@ -102,9 +123,7 @@ export default function MentorReports() {
                   </td>
                   <td className="p-3">
                     <button
-                      onClick={() =>
-                        navigate(`/mentor/reports/${log._id}`)
-                      }
+                      onClick={() => navigate(`/mentor/reports/${log._id}`)}
                       className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
                     >
                       View

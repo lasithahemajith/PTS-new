@@ -181,6 +181,7 @@ export const getMentorLogs = async (req, res) => {
 
     const logs = await LogPaper.find({ studentId: { $in: studentIds } })
       .sort({ date: -1 })
+      .populate("studentId", "name studentIndex")
       .lean();
 
     res.json(logs);
