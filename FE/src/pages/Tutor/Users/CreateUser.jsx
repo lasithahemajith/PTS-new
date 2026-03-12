@@ -7,8 +7,6 @@ export default function CreateUser() {
     email: "",
     role: "Student",
     phone: "",
-    studentIndex: "",
-    company: "",
   });
   const [message, setMessage] = useState("");
   const [generatedPassword, setGeneratedPassword] = useState("");
@@ -29,8 +27,6 @@ export default function CreateUser() {
         email: form.email,
         role: form.role,
         phone: form.phone,
-        studentIndex: form.role === "Student" ? form.studentIndex : null,
-        company: form.role === "Mentor" ? form.company : null,
       });
 
       setMessage(res.data.message || "✅ User created successfully");
@@ -41,17 +37,12 @@ export default function CreateUser() {
         email: "",
         role: "Student",
         phone: "",
-        studentIndex: "",
-        company: "",
       });
     } catch (err) {
       console.error(err);
       setMessage("❌ Failed to create user");
     }
   };
-
-  const isStudent = form.role === "Student";
-  const isMentor = form.role === "Mentor";
 
   return (
     <div className="max-w-xl mx-auto bg-white p-6 rounded-xl shadow-lg">
@@ -109,35 +100,6 @@ export default function CreateUser() {
             required
           />
         </div>
-
-        {/* Conditional Fields */}
-        {isStudent && (
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Student Index ID
-            </label>
-            <input
-              name="studentIndex"
-              value={form.studentIndex}
-              onChange={handleChange}
-              placeholder="e.g., 2025-XXXX"
-              className="w-full border p-2 rounded"
-            />
-          </div>
-        )}
-
-        {isMentor && (
-          <div>
-            <label className="block text-sm font-medium mb-1">Company Name</label>
-            <input
-              name="company"
-              value={form.company}
-              onChange={handleChange}
-              placeholder="Enter company name"
-              className="w-full border p-2 rounded"
-            />
-          </div>
-        )}
 
         {/* Info */}
         <div className="bg-indigo-50 text-sm text-gray-700 p-3 rounded-md">

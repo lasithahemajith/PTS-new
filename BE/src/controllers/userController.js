@@ -23,7 +23,7 @@ export const getProfile = async (req, res) => {
 // Create user (Tutor only)
 export const createUser = async (req, res) => {
   try {
-    const { name, email, role, phone, studentIndex, company } = req.body;
+    const { name, email, role, phone } = req.body;
 
     if (!name || !email || !role) {
       return res.status(400).json({ error: "Name, email, and role required" });
@@ -43,8 +43,6 @@ export const createUser = async (req, res) => {
       role,
       password: hashedPassword,
       phone: phone || null,
-      studentIndex: role === "Student" ? studentIndex || null : null,
-      company: role === "Mentor" ? company || null : null,
     });
 
     res.status(201).json({
@@ -55,8 +53,6 @@ export const createUser = async (req, res) => {
         email: newUser.email,
         role: newUser.role,
         phone: newUser.phone,
-        studentIndex: newUser.studentIndex,
-        company: newUser.company,
       },
       generatedPassword: autoPassword,
       info: "Password auto-generated and securely stored (visible once to Tutor).",
