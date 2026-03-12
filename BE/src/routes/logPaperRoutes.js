@@ -3,6 +3,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import dotenv from "dotenv";
+import rateLimit from "express-rate-limit";
 import { verifyToken } from "../middlewares/authMiddleware.js";
 import {
   createLogPaper,
@@ -12,10 +13,20 @@ import {
   getAllLogs,
   getMentorLogs,
   getLogPaperById,
+  updateLogPaper,
+  deleteLogPaper,
 } from "../controllers/logPaperController.js";
 
 dotenv.config();
 const router = express.Router();
+
+const logMutationLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 30,
+  message: { error: "Too many requests. Please try again later." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 const uploadDir = path.resolve(process.env.UPLOAD_PATH || "uploads/logpapers");
 if (!fs.existsSync(uploadDir)) {
@@ -43,5 +54,7 @@ router.patch("/:id/feedback", verifyToken, addTutorFeedback);
 router.get("/all", verifyToken, getAllLogs);
 router.get("/mentor/reports", verifyToken, getMentorLogs);
 router.get("/:id", verifyToken, getLogPaperById);
+router.put("/:id", logMutationLimiter, verifyToken, updateLogPaper);
+router.delete("/:id", logMutationLimiter, verifyToken, deleteLogPaper);
 
 export default router;

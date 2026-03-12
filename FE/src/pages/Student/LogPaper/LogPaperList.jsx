@@ -11,7 +11,12 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
+  Pencil,
+  Trash2,
+  X,
+  Save,
 } from "lucide-react";
+import Swal from "sweetalert2";
 
 export default function LogPaperList() {
   const { token } = useAuth();
@@ -29,22 +34,31 @@ export default function LogPaperList() {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(6);
 
+  // Edit modal state
+  const [editingLog, setEditingLog] = useState(null);
+  const [editForm, setEditForm] = useState({});
+  const [editLoading, setEditLoading] = useState(false);
+
+  const today = new Date().toISOString().split("T")[0];
+
   // ✅ Fetch logs
+  const fetchLogs = async () => {
+    try {
+      const res = await API.get("/logpaper/my", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setLogs(res.data || []);
+    } catch (err) {
+      console.error("Error fetching logs:", err);
+      setError("Failed to load logs. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchLogs = async () => {
-      try {
-        const res = await API.get("/logpaper/my", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setLogs(res.data || []);
-      } catch (err) {
-        console.error("Error fetching logs:", err);
-        setError("Failed to load logs. Please try again.");
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchLogs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   // ✅ Apply filters
@@ -87,6 +101,75 @@ export default function LogPaperList() {
   }, [filteredLogs, page, perPage]);
 
   const totalPages = Math.ceil(filteredLogs.length / perPage);
+
+  // ✅ Open edit modal
+  const openEdit = (log, e) => {
+    e.stopPropagation();
+    const dateStr = log.date ? new Date(log.date).toISOString().split("T")[0] : "";
+    setEditForm({
+      date: dateStr,
+      startTime: log.startTime || "",
+      endTime: log.endTime || "",
+      totalHours: log.totalHours || "",
+      activity: log.activity || "",
+      description: log.description || "",
+    });
+    setEditingLog(log);
+  };
+
+  const calculateHours = (start, end) => {
+    if (!start || !end) return "";
+    const s = new Date(`1970-01-01T${start}:00`);
+    const en = new Date(`1970-01-01T${end}:00`);
+    const diff = (en - s) / (1000 * 60 * 60);
+    return diff > 0 ? diff.toFixed(2) : "";
+  };
+
+  const handleEditChange = (e) => {
+    const { name, value } = e.target;
+    const updated = { ...editForm, [name]: value };
+    if (name === "startTime" || name === "endTime") {
+      updated.totalHours = calculateHours(updated.startTime, updated.endTime);
+    }
+    setEditForm(updated);
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    setEditLoading(true);
+    try {
+      await API.put(`/logpaper/${editingLog._id}`, editForm);
+      Swal.fire({ icon: "success", title: "Updated!", text: "Log updated successfully.", timer: 1800, showConfirmButton: false });
+      setEditingLog(null);
+      fetchLogs();
+    } catch (err) {
+      Swal.fire({ icon: "error", title: "Error", text: err.response?.data?.error || "Failed to update log." });
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  // ✅ Delete handler
+  const handleDelete = async (log, e) => {
+    e.stopPropagation();
+    const result = await Swal.fire({
+      title: "Delete Log?",
+      text: "This action cannot be undone.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: "Yes, delete it!",
+    });
+    if (!result.isConfirmed) return;
+    try {
+      await API.delete(`/logpaper/${log._id}`);
+      Swal.fire({ icon: "success", title: "Deleted!", text: "Log deleted.", timer: 1500, showConfirmButton: false });
+      fetchLogs();
+    } catch (err) {
+      Swal.fire({ icon: "error", title: "Error", text: err.response?.data?.error || "Failed to delete log." });
+    }
+  };
 
   if (loading)
     return (
@@ -255,6 +338,24 @@ export default function LogPaperList() {
                     </p>
                   </>
                 )}
+
+                {/* Edit/Delete buttons for Pending logs */}
+                {log.status === "Pending" && (
+                  <div className="flex gap-2 mt-4 pt-3 border-t border-gray-100">
+                    <button
+                      onClick={(e) => openEdit(log, e)}
+                      className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition"
+                    >
+                      <Pencil size={13} /> Edit
+                    </button>
+                    <button
+                      onClick={(e) => handleDelete(log, e)}
+                      className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition"
+                    >
+                      <Trash2 size={13} /> Delete
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -290,6 +391,112 @@ export default function LogPaperList() {
             </button>
           </div>
         </>
+      )}
+
+      {/* Edit Modal */}
+      {editingLog && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl p-6 relative">
+            <button
+              onClick={() => setEditingLog(null)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+            >
+              <X size={20} />
+            </button>
+            <h3 className="text-xl font-bold text-indigo-700 mb-5">✏️ Edit Practicum Log</h3>
+            <form onSubmit={handleEditSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                <input
+                  type="date"
+                  name="date"
+                  value={editForm.date}
+                  max={today}
+                  onChange={handleEditChange}
+                  required
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300 outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Activity</label>
+                <select
+                  name="activity"
+                  value={editForm.activity}
+                  onChange={handleEditChange}
+                  required
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300 outline-none"
+                >
+                  <option value="">Select activity</option>
+                  <option value="Observation">Observation</option>
+                  <option value="Documentation">Documentation</option>
+                  <option value="Case Discussion">Case Discussion</option>
+                  <option value="Supervision">Supervision</option>
+                  <option value="Client Interaction">Client Interaction</option>
+                  <option value="Assessment">Assessment</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+                <input
+                  type="time"
+                  name="startTime"
+                  value={editForm.startTime}
+                  onChange={handleEditChange}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300 outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
+                <input
+                  type="time"
+                  name="endTime"
+                  value={editForm.endTime}
+                  onChange={handleEditChange}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300 outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Total Hours</label>
+                <input
+                  type="number"
+                  name="totalHours"
+                  value={editForm.totalHours}
+                  onChange={handleEditChange}
+                  placeholder="Auto-calculated"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300 outline-none"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea
+                  name="description"
+                  value={editForm.description}
+                  onChange={handleEditChange}
+                  rows={3}
+                  required
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300 outline-none resize-y"
+                />
+              </div>
+              <div className="md:col-span-2 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setEditingLog(null)}
+                  className="px-4 py-2 text-sm rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={editLoading}
+                  className="flex items-center gap-2 px-5 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition disabled:opacity-60"
+                >
+                  <Save size={15} />
+                  {editLoading ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

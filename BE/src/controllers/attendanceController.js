@@ -5,7 +5,7 @@ import { createAuditLog } from "../utils/auditLogger.js";
 // Add Attendance (Prevent duplicate for same day)
 export const addAttendance = async (req, res) => {
   try {
-    const { type, attended, reason } = req.body;
+    const { type, attended, reason, latitude, longitude, locationName } = req.body;
     const studentId = req.user.id;
     const today = new Date();
     const startOfDay = new Date(today);
@@ -29,6 +29,9 @@ export const addAttendance = async (req, res) => {
       type,
       attended,
       reason: attended === "No" ? reason : null,
+      latitude: latitude != null ? parseFloat(latitude) : null,
+      longitude: longitude != null ? parseFloat(longitude) : null,
+      locationName: locationName || null,
     });
 
     res.status(201).json({

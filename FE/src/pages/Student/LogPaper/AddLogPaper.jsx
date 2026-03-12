@@ -6,8 +6,11 @@ import { motion } from "framer-motion";
 export default function AddLogPaper() {
   const { user } = useAuth();
 
+  // Get today's date in YYYY-MM-DD format for max date restriction
+  const today = new Date().toISOString().split("T")[0];
+
   const [form, setForm] = useState({
-    date: "",
+    date: today,
     startTime: "",
     endTime: "",
     totalHours: "",
@@ -56,7 +59,7 @@ export default function AddLogPaper() {
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 2500);
       setForm({
-        date: "",
+        date: today,
         startTime: "",
         endTime: "",
         totalHours: "",
@@ -94,10 +97,12 @@ export default function AddLogPaper() {
               type="date"
               name="date"
               value={form.date}
+              max={today}
               onChange={handleChange}
               required
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-indigo-300 outline-none"
             />
+            <p className="text-xs text-gray-400 mt-1">You can only log today or past dates.</p>
           </div>
 
           <div className="flex gap-3">
