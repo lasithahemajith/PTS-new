@@ -24,7 +24,7 @@ export const createLogPaper = async (req, res) => {
           path: file.path,
           mimetype: file.mimetype,
           size: file.size,
-          url: `${req.protocol}://${req.get("host")}/${file.path.replace(/\\/g, "/")}`,
+          url: `${req.protocol}://${req.get("host")}/${path.relative(path.resolve(), file.path).replace(/\\/g, "/")}`,
         }))
       : [];
 

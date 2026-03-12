@@ -51,6 +51,25 @@ export default function LogPaperDetails() {
           <p><strong>Activity:</strong> {log.activity}</p>
           <p><strong>Total Hours:</strong> {log.totalHours ?? "-"}</p>
           <p><strong>Description:</strong> {log.description}</p>
+          {log.attachments?.length > 0 && (
+            <div>
+              <strong>Attachments:</strong>
+              <ul className="list-disc list-inside mt-1">
+                {log.attachments.map((a, i) => (
+                  <li key={i}>
+                    <a
+                      href={a.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-indigo-600 hover:underline"
+                    >
+                      {a.filename}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </div>
 

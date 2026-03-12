@@ -108,6 +108,7 @@ export default function TutorFeedback() {
         <p><strong>Student ID:</strong> {log.studentId}</p>
         <p><strong>Date:</strong> {new Date(log.date).toLocaleDateString()}</p>
         <p><strong>Activity:</strong> {log.activity}</p>
+        <p><strong>Total Hours:</strong> {log.totalHours ?? "-"}</p>
         <p><strong>Description:</strong> {log.description}</p>
         <p>
           <strong>Status:</strong>{" "}
@@ -123,6 +124,25 @@ export default function TutorFeedback() {
             {log.status}
           </span>
         </p>
+        {log.attachments?.length > 0 && (
+          <div className="mt-3">
+            <strong>Attachments:</strong>
+            <ul className="list-disc list-inside mt-1">
+              {log.attachments.map((a, i) => (
+                <li key={i}>
+                  <a
+                    href={a.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-indigo-600 hover:underline text-sm"
+                  >
+                    {a.filename}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
 
       {/* 👨‍🏫 Mentor Feedback */}

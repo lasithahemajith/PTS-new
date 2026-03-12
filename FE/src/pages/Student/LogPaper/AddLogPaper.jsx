@@ -10,7 +10,7 @@ export default function AddLogPaper() {
     date: "",
     startTime: "",
     endTime: "",
-    hours: "",
+    totalHours: "",
     activity: "",
     description: "",
     attachments: null,
@@ -33,7 +33,7 @@ export default function AddLogPaper() {
       setForm({ ...form, attachments: files });
     } else if (name === "startTime" || name === "endTime") {
       const updated = { ...form, [name]: value };
-      updated.hours = calculateHours(updated.startTime, updated.endTime);
+      updated.totalHours = calculateHours(updated.startTime, updated.endTime);
       setForm(updated);
     } else {
       setForm({ ...form, [name]: value });
@@ -59,7 +59,7 @@ export default function AddLogPaper() {
         date: "",
         startTime: "",
         endTime: "",
-        hours: "",
+        totalHours: "",
         activity: "",
         description: "",
         attachments: null,
@@ -133,8 +133,8 @@ export default function AddLogPaper() {
             </label>
             <input
               type="number"
-              name="hours"
-              value={form.hours}
+              name="totalHours"
+              value={form.totalHours}
               onChange={handleChange}
               placeholder="Auto-calculated or enter manually"
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-indigo-300 outline-none"
