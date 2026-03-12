@@ -19,7 +19,7 @@ export const login = async ({ email, password }) => {
   const valid = await bcrypt.compare(password, user.password);
   if (!valid) throw new Error("Invalid credentials");
 
-  const token = generateToken({ id: user.id, role: user.role });
+  const token = generateToken({ id: user.id, role: user.role, name: user.name });
 
   const safeUser = {
     id: user.id,

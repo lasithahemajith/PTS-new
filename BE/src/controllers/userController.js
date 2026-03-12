@@ -3,6 +3,7 @@ import crypto from "crypto";
 import mongoose from "mongoose";
 import User from "../models/userModel.js";
 import MentorStudentMap from "../models/mentorStudentMapModel.js";
+import { createAuditLog } from "../utils/auditLogger.js";
 
 // Utility: generate secure random password
 const generateRandomPassword = (length = 10) => {
@@ -70,6 +71,17 @@ export const createUser = async (req, res) => {
       generatedPassword: autoPassword,
       info: "Password auto-generated and securely stored (visible once to Tutor).",
     });
+
+    createAuditLog({
+      userId: req.user.id,
+      userName: req.user.name || req.user.id,
+      userRole: req.user.role,
+      action: "CREATE_USER",
+      resource: "user",
+      resourceId: newUser.id,
+      details: `Created ${role} account: ${name} (${email})`,
+      ipAddress: req.ip || req.headers["x-forwarded-for"] || null,
+    });
   } catch (err) {
     console.error("createUser error:", err);
     res.status(500).json({ error: "Failed to create user" });
@@ -122,6 +134,17 @@ export const mapMentorToStudent = async (req, res) => {
     );
 
     res.status(201).json({ message: "Mapped successfully", mapping });
+
+    createAuditLog({
+      userId: req.user.id,
+      userName: req.user.name || req.user.id,
+      userRole: req.user.role,
+      action: "MAP_MENTOR",
+      resource: "mapping",
+      resourceId: mapping._id?.toString(),
+      details: `Mapped mentor ${mentor.name} to student ${student.name}`,
+      ipAddress: req.ip || req.headers["x-forwarded-for"] || null,
+    });
   } catch (err) {
     console.error("mapMentorToStudent error:", err);
     res.status(500).json({ error: "Failed to map mentor and student" });
@@ -166,6 +189,16 @@ export const unmapMentorFromStudent = async (req, res) => {
     await MentorStudentMap.findOneAndDelete({ mentorId: mentor._id, studentId: student._id });
 
     res.json({ message: "Unmapped successfully" });
+
+    createAuditLog({
+      userId: req.user.id,
+      userName: req.user.name || req.user.id,
+      userRole: req.user.role,
+      action: "UNMAP_MENTOR",
+      resource: "mapping",
+      details: `Unmapped mentor ${mentor.name} from student ${student.name}`,
+      ipAddress: req.ip || req.headers["x-forwarded-for"] || null,
+    });
   } catch (err) {
     console.error("unmapMentorFromStudent error:", err);
     res.status(500).json({ error: "Failed to unmap" });
@@ -208,6 +241,17 @@ export const resetUserPassword = async (req, res) => {
       generatedPassword: newPassword,
       info: "New password generated. User must change it on next login.",
     });
+
+    createAuditLog({
+      userId: req.user.id,
+      userName: req.user.name || req.user.id,
+      userRole: req.user.role,
+      action: "RESET_PASSWORD",
+      resource: "user",
+      resourceId: userId,
+      details: `Password reset for user: ${user.name} (${user.email})`,
+      ipAddress: req.ip || req.headers["x-forwarded-for"] || null,
+    });
   } catch (err) {
     console.error("resetUserPassword error:", err);
     res.status(500).json({ error: "Failed to reset password" });
@@ -230,6 +274,16 @@ export const changeOwnPassword = async (req, res) => {
     await user.save();
 
     res.json({ message: "✅ Password changed successfully" });
+
+    createAuditLog({
+      userId: req.user.id,
+      userName: req.user.name || req.user.id,
+      userRole: req.user.role,
+      action: "CHANGE_PASSWORD",
+      resource: "auth",
+      details: "User changed their password",
+      ipAddress: req.ip || req.headers["x-forwarded-for"] || null,
+    });
   } catch (err) {
     console.error("changeOwnPassword error:", err);
     res.status(500).json({ error: "Failed to change password" });
