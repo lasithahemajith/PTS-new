@@ -64,7 +64,7 @@ export const getMentorAttendance = async (req, res) => {
     const studentIds = assigned.map((s) => s.studentId);
 
     if (studentIds.length === 0)
-      return res.json({ message: "No students assigned." });
+      return res.json([]);
 
     const records = await Attendance.find({
       studentId: { $in: studentIds },

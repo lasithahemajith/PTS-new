@@ -12,8 +12,9 @@ export default function MentorAttendance() {
     (async () => {
       try {
         const res = await API.get("/attendance/mentor");
-        setRecords(res.data);
-        setFiltered(res.data);
+        const data = Array.isArray(res.data) ? res.data : [];
+        setRecords(data);
+        setFiltered(data);
       } catch (err) {
         console.error("Error loading mentor attendance:", err);
       }
@@ -25,7 +26,7 @@ export default function MentorAttendance() {
 
     if (search.trim()) {
       filteredData = filteredData.filter((r) =>
-        r.student.name.toLowerCase().includes(search.toLowerCase())
+        r.studentId?.name?.toLowerCase().includes(search.toLowerCase())
       );
     }
 
@@ -91,9 +92,9 @@ export default function MentorAttendance() {
                     {new Date(r.createdAt).toLocaleDateString()}
                   </td>
                   <td className="p-3 font-medium text-gray-800">
-                    {r.student.name}
+                    {r.studentId?.name || "N/A"}
                   </td>
-                  <td className="p-3 text-gray-600">{r.student.email}</td>
+                  <td className="p-3 text-gray-600">{r.studentId?.email || "N/A"}</td>
                   <td
                     className={`p-3 font-semibold ${
                       r.attended === "Yes" ? "text-green-600" : "text-red-600"

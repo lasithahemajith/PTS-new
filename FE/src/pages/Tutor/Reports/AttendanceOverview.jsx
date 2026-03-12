@@ -17,8 +17,9 @@ export default function AttendanceOverview() {
     (async () => {
       try {
         const res = await API.get("/attendance/tutor");
-        setRecords(res.data);
-        setFiltered(res.data);
+        const data = Array.isArray(res.data) ? res.data : [];
+        setRecords(data);
+        setFiltered(data);
       } catch (err) {
         console.error("Error loading tutor attendance:", err);
       }
@@ -31,7 +32,7 @@ export default function AttendanceOverview() {
 
     if (search.trim()) {
       data = data.filter((r) =>
-        r.student.name.toLowerCase().includes(search.toLowerCase())
+        r.studentId?.name?.toLowerCase().includes(search.toLowerCase())
       );
     }
 
@@ -60,8 +61,8 @@ export default function AttendanceOverview() {
       ["Date", "Student Name", "Email", "Type", "Status", "Reason"],
       ...filtered.map((r) => [
         new Date(r.createdAt).toLocaleDateString(),
-        r.student.name,
-        r.student.email,
+        r.studentId?.name || "N/A",
+        r.studentId?.email || "N/A",
         r.type,
         r.attended,
         r.reason || "-",
@@ -201,9 +202,9 @@ export default function AttendanceOverview() {
                     {new Date(r.createdAt).toLocaleDateString()}
                   </td>
                   <td className="p-3 text-gray-900 font-semibold">
-                    {r.student.name}
+                    {r.studentId?.name || "N/A"}
                   </td>
-                  <td className="p-3 text-gray-600">{r.student.email}</td>
+                  <td className="p-3 text-gray-600">{r.studentId?.email || "N/A"}</td>
                   <td
                     className={`p-3 font-medium ${
                       r.type === "Class" ? "text-blue-700" : "text-purple-700"
