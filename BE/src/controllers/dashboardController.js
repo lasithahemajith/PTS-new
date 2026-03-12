@@ -117,7 +117,7 @@ export const getStudentProgress = async (req, res) => {
     if (req.user.role !== "Tutor")
       return res.status(403).json({ error: "Access denied" });
 
-    const { from, to, minHours, minLogs } = req.query;
+    const { from, to, minHours, minLogs, student, activity, status } = req.query;
 
     const attendanceFilter = {};
     const logFilter = {};
@@ -128,44 +128,92 @@ export const getStudentProgress = async (req, res) => {
       attendanceFilter.createdAt = dateFilter;
       logFilter.createdAt = dateFilter;
     }
+    if (activity && activity !== "All") logFilter.activity = activity;
+    if (status && status !== "All") logFilter.status = status;
 
     const attendance = await Attendance.find(attendanceFilter).populate("studentId", "name");
     const logs = await LogPaper.find(logFilter).populate("studentId", "name");
 
     const progress = {};
 
+    const initStudent = () => ({
+      attendanceDays: 0,
+      logsSubmitted: 0,
+      totalHours: 0,
+      pendingLogs: 0,
+      verifiedLogs: 0,
+      reviewedLogs: 0,
+      activities: {},
+    });
+
     attendance.forEach((a) => {
       const name = a.studentId?.name || "Unknown";
-      if (!progress[name])
-        progress[name] = { attendanceDays: 0, logsSubmitted: 0, totalHours: 0 };
+      if (!progress[name]) progress[name] = initStudent();
       if (a.attended === "Yes") progress[name].attendanceDays++;
     });
 
     logs.forEach((l) => {
-      const name = l.studentId?.name || `Student #${l.studentId}`;
-      if (!progress[name])
-        progress[name] = { attendanceDays: 0, logsSubmitted: 0, totalHours: 0 };
+      const name = l.studentId?.name || `Student #${l.studentId?._id || l.studentId}`;
+      if (!progress[name]) progress[name] = initStudent();
       progress[name].logsSubmitted++;
       progress[name].totalHours += Number(l.totalHours || 0);
+      if (l.status === "Pending") progress[name].pendingLogs++;
+      else if (l.status === "Verified") progress[name].verifiedLogs++;
+      else if (l.status === "Reviewed") progress[name].reviewedLogs++;
+      if (l.activity) {
+        progress[name].activities[l.activity] =
+          (progress[name].activities[l.activity] || 0) + 1;
+      }
     });
 
     let data = Object.entries(progress).map(([name, val]) => ({
       name,
-      ...val,
+      attendanceDays: val.attendanceDays,
+      logsSubmitted: val.logsSubmitted,
+      totalHours: parseFloat(val.totalHours.toFixed(1)),
+      pendingLogs: val.pendingLogs,
+      verifiedLogs: val.verifiedLogs,
+      reviewedLogs: val.reviewedLogs,
+      avgHoursPerLog:
+        val.logsSubmitted > 0
+          ? parseFloat((val.totalHours / val.logsSubmitted).toFixed(1))
+          : 0,
+      activitiesBreakdown: Object.entries(val.activities).map(([actName, count]) => ({
+        name: actName,
+        count,
+      })),
     }));
 
+    // Filter by student name search
+    if (student && student.trim()) {
+      const q = student.toLowerCase();
+      data = data.filter((d) => d.name.toLowerCase().includes(q));
+    }
     if (minHours) data = data.filter((d) => d.totalHours >= Number(minHours));
     if (minLogs) data = data.filter((d) => d.logsSubmitted >= Number(minLogs));
 
     data.sort((a, b) => b.totalHours - a.totalHours);
 
     const totalStudents = data.length;
-    const totalHours = data.reduce((s, d) => s + d.totalHours, 0);
-    const avgHours = totalStudents ? (totalHours / totalStudents).toFixed(1) : 0;
+    const totalHours = parseFloat(data.reduce((s, d) => s + d.totalHours, 0).toFixed(1));
+    const avgHours = totalStudents
+      ? parseFloat((totalHours / totalStudents).toFixed(1))
+      : 0;
     const totalLogs = data.reduce((s, d) => s + d.logsSubmitted, 0);
+    const totalPending = data.reduce((s, d) => s + d.pendingLogs, 0);
+    const totalVerified = data.reduce((s, d) => s + d.verifiedLogs, 0);
+    const totalReviewed = data.reduce((s, d) => s + d.reviewedLogs, 0);
 
     res.json({
-      summary: { totalStudents, totalLogs, totalHours, avgHours },
+      summary: {
+        totalStudents,
+        totalLogs,
+        totalHours,
+        avgHours,
+        totalPending,
+        totalVerified,
+        totalReviewed,
+      },
       data,
     });
   } catch (err) {

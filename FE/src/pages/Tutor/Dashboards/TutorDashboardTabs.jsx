@@ -17,11 +17,11 @@ const tabs = [
     label: "Attendance Overview",
     icon: <BarChart3 size={16} />,
   },
-  // {
-  //   key: "progress",
-  //   label: "Student Progress",
-  //   icon: <GraduationCap size={16} />,
-  // },
+  {
+    key: "progress",
+    label: "Student Progress",
+    icon: <GraduationCap size={16} />,
+  },
 ];
 
 export default function TutorDashboardTabs() {
