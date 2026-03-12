@@ -6,25 +6,26 @@ import StudentProgressDashboard from "./StudentProgressDashboard";
 import { BarChart3, BookOpen, GraduationCap } from "lucide-react";
 
 const tabs = [
-  {
-    key: "attendance",
-    label: "Attendance Overview",
-    icon: <BarChart3 size={16} />,
-  },
+  
   {
     key: "logs",
     label: "Practicum Log Summary",
     icon: <BookOpen size={16} />,
   },
   {
-    key: "progress",
-    label: "Student Progress",
-    icon: <GraduationCap size={16} />,
+    key: "attendance",
+    label: "Attendance Overview",
+    icon: <BarChart3 size={16} />,
   },
+  // {
+  //   key: "progress",
+  //   label: "Student Progress",
+  //   icon: <GraduationCap size={16} />,
+  // },
 ];
 
 export default function TutorDashboardTabs() {
-  const [activeTab, setActiveTab] = useState("attendance");
+  const [activeTab, setActiveTab] = useState("logs");
 
   return (
     <div className="min-h-[calc(100vh-80px)]">
