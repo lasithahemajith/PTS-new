@@ -35,9 +35,13 @@ PTS-new/
 │   ├── src/
 │   │   ├── api/           # Axios setup & interceptors
 │   │   ├── components/    # Reusable UI components
-│   │   ├── context/       # Auth context (Tutor / Mentor / Student)
-│   │   ├── pages/         # All main pages
-│   │   └── App.jsx        # Root app
+│   │   ├── context/       # Auth context (JWT-based, unified)
+│   │   ├── layouts/       # Shared page layouts
+│   │   ├── pages/         # All main pages (Student / Mentor / Tutor / Auth)
+│   │   ├── routes/        # React Router route definitions
+│   │   └── utils/         # Utility functions
+│   ├── App.jsx            # Root app component
+│   ├── main.jsx           # App entry point
 │   ├── Dockerfile
 │   └── package.json
 │
@@ -56,6 +60,7 @@ PTS-new/
 - **bcryptjs** for password hashing
 - **dotenv**, **multer** for env config and file uploads
 - **exceljs** / **json2csv** for report exports
+- **express-rate-limit** for API rate limiting
 
 ### Frontend
 - **React + Vite**
@@ -64,6 +69,12 @@ PTS-new/
 - **Axios**
 - **React Router v7**
 - **Zustand** for state management
+- **Recharts** for data visualisation
+- **jspdf** + **jspdf-autotable** for PDF export
+- **xlsx** + **file-saver** for Excel export
+- **react-hot-toast** / **react-toastify** for notifications
+- **SweetAlert2** for confirmation dialogs
+- **lucide-react** + **@radix-ui/react-icons** for icons
 
 ---
 
@@ -79,6 +90,8 @@ All data is stored in a single MongoDB database with the following collections:
 | `logpapers` | Practicum activity logs with file attachments |
 | `mentorfeedbacks` | Mentor feedback on log papers |
 | `tutorfeedbacks` | Tutor evaluations on log papers |
+| `auditlogs` | System audit trail (user actions & changes) |
+| `notifications` | In-app notifications for users |
 
 ---
 
@@ -88,7 +101,8 @@ All data is stored in a single MongoDB database with the following collections:
 |------|-----------|
 | **Student** | Submit practicum logs, view feedback, track hours, record attendance |
 | **Mentor** | Review & verify logs, comment, view assigned students' attendance |
-| **Tutor (Admin)** | Manage users, assign mentors, view reports, export data |
+| **Tutor (Admin)** | Manage users, assign mentors, view reports, export data, view audit trail |
+| **All Roles** | In-app notifications, session timeout handling |
 
 ---
 
