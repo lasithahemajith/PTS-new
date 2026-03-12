@@ -3,6 +3,7 @@ import crypto from "crypto";
 import mongoose from "mongoose";
 import User from "../models/userModel.js";
 import MentorStudentMap from "../models/mentorStudentMapModel.js";
+import { createNotification } from "../utils/notificationHelper.js";
 
 // Utility: generate secure random password
 const generateRandomPassword = (length = 10) => {
@@ -55,6 +56,19 @@ export const createUser = async (req, res) => {
     }
 
     const newUser = await User.create(userData);
+
+    // Notify all Tutors about the new user creation
+    const tutors = await User.find({ role: "Tutor" }).select("_id");
+    if (tutors.length > 0) {
+      await createNotification(
+        tutors.map((t) => ({
+          userId: t._id,
+          type: "user_created",
+          message: `New ${newUser.role} "${newUser.name}" has been registered.`,
+          relatedId: newUser._id,
+        }))
+      );
+    }
 
     res.status(201).json({
       message: "✅ User created successfully",
@@ -120,6 +134,22 @@ export const mapMentorToStudent = async (req, res) => {
       { mentorId: mentor._id, studentId: student._id },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
+
+    // Notify the mentor about the new student assignment
+    await createNotification({
+      userId: mentor._id,
+      type: "student_assigned",
+      message: `Student "${student.name}" has been assigned to you.`,
+      relatedId: student._id,
+    });
+
+    // Notify the student about their mentor assignment
+    await createNotification({
+      userId: student._id,
+      type: "student_assigned",
+      message: `You have been assigned to mentor "${mentor.name}".`,
+      relatedId: mentor._id,
+    });
 
     res.status(201).json({ message: "Mapped successfully", mapping });
   } catch (err) {

@@ -1,6 +1,7 @@
 import { LogOut } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
+import NotificationBell from "@/components/NotificationBell";
 
 export default function Navbar({ onLogout }) {
   const { user } = useAuth();
@@ -16,6 +17,7 @@ export default function Navbar({ onLogout }) {
       </h1>
 
       <div className="flex items-center gap-4">
+        <NotificationBell />
         <div className="text-right">
           <p className="font-medium text-indigo-900">{user?.name}</p>
           <p className="text-xs text-gray-500">{user?.role}</p>
