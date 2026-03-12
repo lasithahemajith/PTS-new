@@ -2,8 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import AttendanceDashboard from "./AttendanceDashboard";
 import LogSummaryDashboard from "./LogSummaryDashboard";
-import StudentProgressDashboard from "./StudentProgressDashboard";
-import { BarChart3, BookOpen, GraduationCap } from "lucide-react";
+import { BarChart3, BookOpen } from "lucide-react";
 
 const tabs = [
   
@@ -17,11 +16,6 @@ const tabs = [
     label: "Attendance Overview",
     icon: <BarChart3 size={16} />,
   },
-  // {
-  //   key: "progress",
-  //   label: "Student Progress",
-  //   icon: <GraduationCap size={16} />,
-  // },
 ];
 
 export default function TutorDashboardTabs() {
@@ -75,7 +69,6 @@ export default function TutorDashboardTabs() {
         >
           {activeTab === "attendance" && <AttendanceDashboard />}
           {activeTab === "logs" && <LogSummaryDashboard />}
-          {activeTab === "progress" && <StudentProgressDashboard />}
         </motion.div>
       </AnimatePresence>
     </div>
