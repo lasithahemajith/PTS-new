@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import API from "@/api/axios";
 import Swal from "sweetalert2";
 import { MapPin, Loader2, Navigation } from "lucide-react";
@@ -11,7 +11,7 @@ export default function AttendanceForm() {
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationError, setLocationError] = useState("");
 
-  const getLocation = () => {
+  const getLocation = useCallback(() => {
     if (!navigator.geolocation) {
       setLocationError("Geolocation is not supported by your browser.");
       return;
@@ -33,12 +33,18 @@ export default function AttendanceForm() {
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
-  };
-
-  // Auto-request location on mount
-  useEffect(() => {
-    getLocation();
   }, []);
+
+  // Auto-request location when attended = "Yes"
+  useEffect(() => {
+    if (attended === "Yes") {
+      getLocation();
+    } else {
+      // Clear location when marking as absent
+      setLocation(null);
+      setLocationError("");
+    }
+  }, [attended, getLocation]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -47,9 +53,9 @@ export default function AttendanceForm() {
         type,
         attended,
         reason: attended === "No" ? reason : null,
-        latitude: location?.latitude ?? null,
-        longitude: location?.longitude ?? null,
-        locationName: location?.locationName ?? null,
+        latitude: attended === "Yes" ? (location?.latitude ?? null) : null,
+        longitude: attended === "Yes" ? (location?.longitude ?? null) : null,
+        locationName: attended === "Yes" ? (location?.locationName ?? null) : null,
       };
       const res = await API.post("/attendance", payload);
 
@@ -138,7 +144,8 @@ export default function AttendanceForm() {
           </div>
         )}
 
-        {/* GPS Location */}
+        {/* GPS Location — only shown when attended */}
+        {attended === "Yes" && (
         <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2 text-indigo-700 font-medium">
@@ -198,6 +205,7 @@ export default function AttendanceForm() {
             </div>
           )}
         </div>
+        )}
 
         <button
           type="submit"

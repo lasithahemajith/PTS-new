@@ -2,7 +2,7 @@ import Attendance from "../models/attendanceModel.js";
 import MentorStudentMap from "../models/mentorStudentMapModel.js";
 import { createAuditLog } from "../utils/auditLogger.js";
 
-// Add Attendance (Prevent duplicate for same day)
+// Add Attendance (Prevent duplicate of same type for same day)
 export const addAttendance = async (req, res) => {
   try {
     const { type, attended, reason, latitude, longitude, locationName } = req.body;
@@ -15,13 +15,14 @@ export const addAttendance = async (req, res) => {
 
     const existing = await Attendance.findOne({
       studentId,
+      type,
       createdAt: { $gte: startOfDay, $lte: endOfDay },
     });
 
     if (existing) {
       return res
         .status(400)
-        .json({ error: "You have already submitted attendance for today." });
+        .json({ error: `You have already submitted ${type} attendance for today.` });
     }
 
     const attendance = await Attendance.create({
@@ -29,9 +30,9 @@ export const addAttendance = async (req, res) => {
       type,
       attended,
       reason: attended === "No" ? reason : null,
-      latitude: latitude != null ? parseFloat(latitude) : null,
-      longitude: longitude != null ? parseFloat(longitude) : null,
-      locationName: locationName || null,
+      latitude: attended === "Yes" && latitude != null ? parseFloat(latitude) : null,
+      longitude: attended === "Yes" && longitude != null ? parseFloat(longitude) : null,
+      locationName: attended === "Yes" ? (locationName || null) : null,
     });
 
     res.status(201).json({
