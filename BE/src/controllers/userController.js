@@ -78,6 +78,15 @@ export const getUsersByRole = async (req, res) => {
   }
 };
 
+// Resolve a user by MongoDB ObjectId or by name
+const resolveUser = async (identifier) => {
+  if (mongoose.Types.ObjectId.isValid(identifier)) {
+    const byId = await User.findById(identifier);
+    if (byId) return byId;
+  }
+  return await User.findOne({ name: identifier });
+};
+
 // Map mentor to student
 export const mapMentorToStudent = async (req, res) => {
   try {
@@ -85,13 +94,8 @@ export const mapMentorToStudent = async (req, res) => {
     if (!mentorId || !studentId)
       return res.status(400).json({ error: "mentorId and studentId required" });
 
-    if (!mongoose.Types.ObjectId.isValid(mentorId))
-      return res.status(400).json({ error: "Invalid mentorId" });
-    if (!mongoose.Types.ObjectId.isValid(studentId))
-      return res.status(400).json({ error: "Invalid studentId" });
-
-    const mentor = await User.findById(mentorId);
-    const student = await User.findById(studentId);
+    const mentor = await resolveUser(mentorId);
+    const student = await resolveUser(studentId);
 
     if (!mentor || mentor.role !== "Mentor")
       return res.status(400).json({ error: "Invalid mentorId" });
@@ -99,8 +103,8 @@ export const mapMentorToStudent = async (req, res) => {
       return res.status(400).json({ error: "Invalid studentId" });
 
     const mapping = await MentorStudentMap.findOneAndUpdate(
-      { mentorId, studentId },
-      { mentorId, studentId },
+      { mentorId: mentor._id, studentId: student._id },
+      { mentorId: mentor._id, studentId: student._id },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 
@@ -140,12 +144,13 @@ export const unmapMentorFromStudent = async (req, res) => {
     if (!mentorId || !studentId)
       return res.status(400).json({ error: "mentorId and studentId required" });
 
-    if (!mongoose.Types.ObjectId.isValid(mentorId))
-      return res.status(400).json({ error: "Invalid mentorId" });
-    if (!mongoose.Types.ObjectId.isValid(studentId))
-      return res.status(400).json({ error: "Invalid studentId" });
+    const mentor = await resolveUser(mentorId);
+    const student = await resolveUser(studentId);
 
-    await MentorStudentMap.findOneAndDelete({ mentorId, studentId });
+    if (!mentor) return res.status(400).json({ error: "Invalid mentorId" });
+    if (!student) return res.status(400).json({ error: "Invalid studentId" });
+
+    await MentorStudentMap.findOneAndDelete({ mentorId: mentor._id, studentId: student._id });
 
     res.json({ message: "Unmapped successfully" });
   } catch (err) {
