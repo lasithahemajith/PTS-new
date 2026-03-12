@@ -37,7 +37,7 @@ export default function StudentsList() {
     if (confirmEmail !== resetModal.email) return;
     setResetting(true);
     try {
-      const res = await API.post(`/users/${resetModal.id}/reset-password`);
+      const res = await API.post(`/users/${resetModal._id}/reset-password`);
       setResetResult(res.data);
     } catch (err) {
       setResetResult({ error: err.response?.data?.error || "Reset failed" });
@@ -65,7 +65,7 @@ export default function StudentsList() {
           </thead>
           <tbody>
             {students.map((s, i) => (
-              <tr key={s.id} className="text-center hover:bg-indigo-50">
+              <tr key={s._id} className="text-center hover:bg-indigo-50">
                 <td className="border p-2">{i + 1}</td>
                 <td className="border p-2">{s.name}</td>
                 <td className="border p-2">{s.studentIndex || "—"}</td>

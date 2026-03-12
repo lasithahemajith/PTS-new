@@ -15,7 +15,7 @@ const userSchema = new mongoose.Schema(
     company: { type: String, default: null },
     mustChangePassword: { type: Boolean, default: true },
   },
-  { timestamps: true }
+  { timestamps: true, toJSON: { virtuals: true } }
 );
 
 export default mongoose.model("User", userSchema);

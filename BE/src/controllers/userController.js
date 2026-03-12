@@ -194,6 +194,7 @@ export const resetUserPassword = async (req, res) => {
     const { userId } = req.params;
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ error: "User not found" });
+    if (user.role === "Tutor") return res.status(403).json({ error: "Cannot reset password for a Tutor account" });
 
     const newPassword = generateRandomPassword(10);
     const hashedPassword = await bcrypt.hash(newPassword, 10);
