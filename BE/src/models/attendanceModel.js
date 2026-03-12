@@ -6,6 +6,9 @@ const attendanceSchema = new mongoose.Schema(
     type: { type: String, enum: ["Class", "Practicum"], required: true },
     attended: { type: String, enum: ["Yes", "No"], required: true },
     reason: { type: String, default: null },
+    latitude: { type: Number, default: null },
+    longitude: { type: Number, default: null },
+    locationName: { type: String, default: null },
   },
   { timestamps: true }
 );

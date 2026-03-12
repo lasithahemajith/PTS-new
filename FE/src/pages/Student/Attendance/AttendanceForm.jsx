@@ -1,20 +1,63 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import API from "@/api/axios";
 import Swal from "sweetalert2";
+import { MapPin, Loader2, Navigation } from "lucide-react";
 
 export default function AttendanceForm() {
   const [type, setType] = useState("Class");
   const [attended, setAttended] = useState("Yes");
   const [reason, setReason] = useState("");
+  const [location, setLocation] = useState(null);
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [locationError, setLocationError] = useState("");
+
+  const getLocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      setLocationError("Geolocation is not supported by your browser.");
+      return;
+    }
+    setLocationLoading(true);
+    setLocationError("");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocation({
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+          locationName: `${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`,
+        });
+        setLocationLoading(false);
+      },
+      () => {
+        setLocationError("Could not get location. Please allow location access.");
+        setLocationLoading(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  }, []);
+
+  // Auto-request location when attended = "Yes"
+  useEffect(() => {
+    if (attended === "Yes") {
+      getLocation();
+    } else {
+      // Clear location when marking as absent
+      setLocation(null);
+      setLocationError("");
+    }
+  }, [attended, getLocation]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await API.post("/attendance", {
+      const payload = {
         type,
         attended,
         reason: attended === "No" ? reason : null,
-      });
+        latitude: attended === "Yes" ? (location?.latitude ?? null) : null,
+        longitude: attended === "Yes" ? (location?.longitude ?? null) : null,
+        locationName: attended === "Yes" ? (location?.locationName ?? null) : null,
+      };
+      const res = await API.post("/attendance", payload);
 
       Swal.fire({
         icon: "success",
@@ -99,6 +142,69 @@ export default function AttendanceForm() {
               <option value="Other">📝 Other</option>
             </select>
           </div>
+        )}
+
+        {/* GPS Location — only shown when attended */}
+        {attended === "Yes" && (
+        <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2 text-indigo-700 font-medium">
+              <MapPin size={18} />
+              <span>GPS Location</span>
+            </div>
+            <button
+              type="button"
+              onClick={getLocation}
+              disabled={locationLoading}
+              className="flex items-center gap-1 text-xs px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition disabled:opacity-60"
+            >
+              {locationLoading ? <Loader2 size={13} className="animate-spin" /> : <Navigation size={13} />}
+              {locationLoading ? "Locating..." : "Refresh"}
+            </button>
+          </div>
+
+          {locationError && (
+            <p className="text-red-500 text-sm mb-2">{locationError}</p>
+          )}
+
+          {location ? (
+            <div className="space-y-2">
+              <p className="text-sm text-gray-600 flex items-center gap-1">
+                <MapPin size={13} className="text-indigo-400" />
+                <span className="font-mono">{location.latitude.toFixed(5)}, {location.longitude.toFixed(5)}</span>
+              </p>
+              {/* OpenStreetMap embed */}
+              <div className="rounded-xl overflow-hidden border border-indigo-200 mt-2" style={{ height: "200px" }}>
+                <iframe
+                  title="Attendance Location Map"
+                  width="100%"
+                  height="200"
+                  style={{ border: 0 }}
+                  loading="lazy"
+                  src={`https://www.openstreetmap.org/export/embed.html?bbox=${location.longitude - 0.005},${location.latitude - 0.005},${location.longitude + 0.005},${location.latitude + 0.005}&layer=mapnik&marker=${location.latitude},${location.longitude}`}
+                />
+              </div>
+              <p className="text-xs text-gray-400 text-center mt-1">
+                <a
+                  href={`https://www.openstreetmap.org/?mlat=${location.latitude}&mlon=${location.longitude}#map=16/${location.latitude}/${location.longitude}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-indigo-500 hover:underline"
+                >
+                  Open in OpenStreetMap ↗
+                </a>
+              </p>
+            </div>
+          ) : !locationLoading && (
+            <p className="text-sm text-gray-400 italic">Location not captured yet. Click "Refresh" to try again.</p>
+          )}
+          {locationLoading && (
+            <div className="flex items-center gap-2 text-indigo-400 text-sm">
+              <Loader2 size={15} className="animate-spin" />
+              Getting your location...
+            </div>
+          )}
+        </div>
         )}
 
         <button

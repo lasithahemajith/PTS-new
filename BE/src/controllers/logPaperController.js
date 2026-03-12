@@ -21,6 +21,14 @@ export const createLogPaper = async (req, res) => {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
+    // Validate date is not in the future
+    const logDate = new Date(date);
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    if (logDate > today) {
+      return res.status(400).json({ error: "Log date cannot be in the future." });
+    }
+
     const attachments = req.files
       ? req.files.map((file) => ({
           filename: file.originalname,
@@ -282,6 +290,96 @@ export const getLogPaperById = async (req, res) => {
     res.json(log);
   } catch (err) {
     console.error("❌ getLogPaperById error:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+/* =========================================================
+   STUDENT EDIT / DELETE (Pending only)
+   ========================================================= */
+
+// UPDATE Log Paper (Student, Pending status only)
+export const updateLogPaper = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const log = await LogPaper.findById(id);
+    if (!log) return res.status(404).json({ error: "Log not found" });
+    if (log.studentId.toString() !== req.user.id) {
+      return res.status(403).json({ error: "You can only edit your own logs." });
+    }
+    if (log.status !== "Pending") {
+      return res.status(400).json({ error: "Only pending logs can be edited." });
+    }
+
+    const { date, startTime, endTime, totalHours, activity, description } = req.body;
+
+    // Validate required fields
+    if (!activity || !description) {
+      return res.status(400).json({ error: "Activity and description are required." });
+    }
+
+    // Validate date is not in the future
+    if (date) {
+      const logDate = new Date(date);
+      const today = new Date();
+      today.setHours(23, 59, 59, 999);
+      if (logDate > today) {
+        return res.status(400).json({ error: "Log date cannot be in the future." });
+      }
+    }
+
+    const updated = await LogPaper.findByIdAndUpdate(
+      id,
+      { date, startTime, endTime, totalHours, activity, description },
+      { new: true }
+    );
+
+    res.json({ message: "✅ Log updated successfully", log: updated });
+
+    createAuditLog({
+      userId: req.user.id,
+      userName: req.user.name || req.user.id,
+      userRole: req.user.role,
+      action: "UPDATE_LOG",
+      resource: "logpaper",
+      resourceId: id,
+      details: `Updated log: ${activity || log.activity}`,
+      ipAddress: req.ip || req.headers["x-forwarded-for"] || null,
+    });
+  } catch (err) {
+    console.error("❌ updateLogPaper error:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// DELETE Log Paper (Student, Pending status only)
+export const deleteLogPaper = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const log = await LogPaper.findById(id);
+    if (!log) return res.status(404).json({ error: "Log not found" });
+    if (log.studentId.toString() !== req.user.id) {
+      return res.status(403).json({ error: "You can only delete your own logs." });
+    }
+    if (log.status !== "Pending") {
+      return res.status(400).json({ error: "Only pending logs can be deleted." });
+    }
+
+    await LogPaper.findByIdAndDelete(id);
+    res.json({ message: "✅ Log deleted successfully" });
+
+    createAuditLog({
+      userId: req.user.id,
+      userName: req.user.name || req.user.id,
+      userRole: req.user.role,
+      action: "DELETE_LOG",
+      resource: "logpaper",
+      resourceId: id,
+      details: `Deleted log: ${log.activity}`,
+      ipAddress: req.ip || req.headers["x-forwarded-for"] || null,
+    });
+  } catch (err) {
+    console.error("❌ deleteLogPaper error:", err);
     res.status(500).json({ error: err.message });
   }
 };
