@@ -232,7 +232,9 @@ export default function HistoryLogs() {
                   }`}
                 >
                   <td className="px-4 py-3 font-medium text-gray-800">
-                    {log.studentId || "—"}
+                    {log.studentId?.name
+                      ? `${log.studentId.name}${log.studentId.studentIndex ? ` (${log.studentId.studentIndex})` : ""}`
+                      : "—"}
                   </td>
                   <td className="px-4 py-3 text-gray-700">
                     {new Date(log.date).toLocaleDateString()}

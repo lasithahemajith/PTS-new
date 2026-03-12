@@ -11,8 +11,9 @@ const userSchema = new mongoose.Schema(
       required: true,
     },
     phone: { type: String, default: null },
-    studentIndex: { type: String, unique: true, sparse: true, default: null },
+    studentIndex: { type: String, unique: true, sparse: true },
     company: { type: String, default: null },
+    mustChangePassword: { type: Boolean, default: true },
   },
   { timestamps: true }
 );

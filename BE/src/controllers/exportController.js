@@ -7,7 +7,10 @@ import TutorFeedback from "../models/tutorFeedbackModel.js";
  * Utility: gather all log data with mentor and tutor feedbacks
  */
 const getAllLogsData = async () => {
-  const logs = await LogPaper.find().sort({ createdAt: -1 }).lean();
+  const logs = await LogPaper.find()
+    .sort({ createdAt: -1 })
+    .populate("studentId", "name studentIndex")
+    .lean();
 
   // Fetch all tutor feedbacks
   const tutorFeedbacks = await TutorFeedback.find().lean();
@@ -27,7 +30,8 @@ const getAllLogsData = async () => {
   // Combine all data
   const combined = logs.map((log) => ({
     logPaperId: log._id?.toString(),
-    studentId: log.studentId,
+    studentName: log.studentId?.name || "—",
+    studentIndex: log.studentId?.studentIndex || "—",
     activity: log.activity,
     description: log.description,
     mentorComment: log.mentorComment || "—",
@@ -57,7 +61,8 @@ export const exportAllLogsExcel = async (req, res) => {
 
     worksheet.columns = [
       { header: "LogPaper ID", key: "logPaperId", width: 30 },
-      { header: "Student ID", key: "studentId", width: 15 },
+      { header: "Student Name", key: "studentName", width: 20 },
+      { header: "Student Index", key: "studentIndex", width: 15 },
       { header: "Activity", key: "activity", width: 25 },
       { header: "Description", key: "description", width: 40 },
       { header: "Mentor Feedback", key: "mentorComment", width: 40 },
@@ -115,7 +120,8 @@ export const exportAllLogsCSV = async (req, res) => {
 
     const fields = [
       "logPaperId",
-      "studentId",
+      "studentName",
+      "studentIndex",
       "activity",
       "description",
       "mentorComment",

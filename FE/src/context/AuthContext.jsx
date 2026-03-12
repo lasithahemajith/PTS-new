@@ -43,8 +43,15 @@ export const AuthProvider = ({ children }) => {
     localStorage.clear();
   };
 
+  // Mark password as changed (after first-login change)
+  const markPasswordChanged = () => {
+    const updated = { ...user, mustChangePassword: false };
+    setUser(updated);
+    localStorage.setItem("user", JSON.stringify(updated));
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, token, login, logout, loading, markPasswordChanged }}>
       {children}
     </AuthContext.Provider>
   );
