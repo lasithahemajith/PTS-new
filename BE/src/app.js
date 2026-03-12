@@ -19,6 +19,8 @@ import notificationRoutes from "./routes/notificationRoutes.js";
 dotenv.config();
 
 const app = express();
+// IMPORTANT for Render / proxies
+app.set("trust proxy", 1);
 
 // Serve static uploads
 app.use("/uploads", express.static(path.resolve("uploads")));
