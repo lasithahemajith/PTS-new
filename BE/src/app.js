@@ -12,7 +12,9 @@ import tutorDashboardRoutes from "./routes/tutorDashboardRoutes.js";
 import exportRoutes from "./routes/exportRoutes.js";
 import attendanceRoutes from "./routes/attendanceRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
+import auditLogRoutes from "./routes/auditLogRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
+
 
 dotenv.config();
 
@@ -35,7 +37,9 @@ app.use("/tutor", tutorDashboardRoutes);
 app.use("/api/export/logs", exportRoutes);
 app.use("/attendance", attendanceRoutes);
 app.use("/dashboard", dashboardRoutes);
+app.use("/audit", auditLogRoutes);
 app.use("/notifications", notificationRoutes);
+
 
 // Connect MongoDB then start server
 connectMongo()

@@ -2,6 +2,7 @@ import LogPaper from "../models/logPaperModel.js";
 import MentorStudentMap from "../models/mentorStudentMapModel.js";
 import User from "../models/userModel.js";
 import path from "path";
+import { createAuditLog } from "../utils/auditLogger.js";
 import { createNotification } from "../utils/notificationHelper.js";
 
 /* =========================================================
@@ -62,6 +63,17 @@ export const createLogPaper = async (req, res) => {
     res.status(201).json({
       message: "✅ Log paper created successfully",
       log,
+    });
+
+    createAuditLog({
+      userId: req.user.id,
+      userName: req.user.name || req.user.id,
+      userRole: req.user.role,
+      action: "CREATE_LOG",
+      resource: "logpaper",
+      resourceId: log._id?.toString(),
+      details: `Submitted log: ${activity}`,
+      ipAddress: req.ip || req.headers["x-forwarded-for"] || null,
     });
   } catch (err) {
     console.error("❌ LogPaper create error:", err);
@@ -146,6 +158,17 @@ export const verifyLogPaper = async (req, res) => {
     }
 
     res.json({ message: "✅ Log verified successfully", updated });
+
+    createAuditLog({
+      userId: req.user.id,
+      userName: req.user.name || req.user.id,
+      userRole: req.user.role,
+      action: "VERIFY_LOG",
+      resource: "logpaper",
+      resourceId: id,
+      details: mentorComment ? `Mentor comment: ${mentorComment.slice(0, 100)}` : "Log verified",
+      ipAddress: req.ip || req.headers["x-forwarded-for"] || null,
+    });
   } catch (err) {
     console.error("❌ verifyLogPaper error:", err);
     res.status(400).json({ error: err.message });
@@ -184,6 +207,17 @@ export const addTutorFeedback = async (req, res) => {
     });
 
     res.json({ message: "✅ Tutor feedback added successfully", updated });
+
+    createAuditLog({
+      userId: req.user.id,
+      userName: req.user.name || req.user.id,
+      userRole: req.user.role,
+      action: "REVIEW_LOG",
+      resource: "logpaper",
+      resourceId: id,
+      details: tutorFeedback ? `Tutor feedback: ${tutorFeedback.slice(0, 100)}` : "Log reviewed",
+      ipAddress: req.ip || req.headers["x-forwarded-for"] || null,
+    });
   } catch (err) {
     console.error("❌ addTutorFeedback error:", err);
     res.status(400).json({ error: err.message });

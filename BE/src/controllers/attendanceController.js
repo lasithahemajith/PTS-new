@@ -1,5 +1,6 @@
 import Attendance from "../models/attendanceModel.js";
 import MentorStudentMap from "../models/mentorStudentMapModel.js";
+import { createAuditLog } from "../utils/auditLogger.js";
 
 // Add Attendance (Prevent duplicate for same day)
 export const addAttendance = async (req, res) => {
@@ -33,6 +34,17 @@ export const addAttendance = async (req, res) => {
     res.status(201).json({
       message: "✅ Attendance recorded successfully!",
       attendance,
+    });
+
+    createAuditLog({
+      userId: req.user.id,
+      userName: req.user.name || req.user.id,
+      userRole: req.user.role,
+      action: "SUBMIT_ATTENDANCE",
+      resource: "attendance",
+      resourceId: attendance._id?.toString(),
+      details: `Type: ${type}, Attended: ${attended}`,
+      ipAddress: req.ip || req.headers["x-forwarded-for"] || null,
     });
   } catch (err) {
     console.error("❌ addAttendance error:", err);
