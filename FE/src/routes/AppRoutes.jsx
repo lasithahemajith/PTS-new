@@ -5,7 +5,8 @@ import { useAuth } from "@/context/AuthContext";
 import DashboardLayout from "@/layouts/DashboardLayout";
 
 // Auth
-import Login from "@/pages/Auth/Login";
+import Login from "@/pages/Auth/login";
+import ChangePassword from "@/pages/Auth/ChangePassword";
 
 // STUDENT
 import StudentHome from "@/pages/Student/Home/StudentHome";
@@ -36,6 +37,11 @@ function ProtectedRoute({ children, allowedRoles }) {
   if (loading) return <div>Loading...</div>;
   if (!token) return <Navigate to="/login" replace />;
 
+  // If user must change password, redirect to change-password page
+  if (user?.mustChangePassword) {
+    return <Navigate to="/change-password" replace />;
+  }
+
   if (allowedRoles && !allowedRoles.includes(user?.role)) {
     // If logged in but not allowed for this page → redirect to their own dashboard
     if (user?.role === "Student") return <Navigate to="/student/home" replace />;
@@ -57,6 +63,7 @@ export default function AppRoutes() {
   // ✅ Determine default redirect after login
   const getHomeRoute = () => {
     if (!user) return "/login";
+    if (user.mustChangePassword) return "/change-password";
     if (user.role === "Student") return "/student/home";
     if (user.role === "Mentor") return "/mentor/home";
     if (user.role === "Tutor") return "/tutor/home";
@@ -69,6 +76,12 @@ export default function AppRoutes() {
       <Route
         path="/login"
         element={!token ? <Login /> : <Navigate to={getHomeRoute()} replace />}
+      />
+
+      {/* ---------- CHANGE PASSWORD (first login) ---------- */}
+      <Route
+        path="/change-password"
+        element={token ? <ChangePassword /> : <Navigate to="/login" replace />}
       />
 
       {/* ---------- PROTECTED LAYOUT ---------- */}

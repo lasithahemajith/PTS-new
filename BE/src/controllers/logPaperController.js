@@ -153,7 +153,9 @@ export const getAllLogs = async (req, res) => {
       return res.status(403).json({ error: "Access denied" });
     }
 
-    const logs = await LogPaper.find().sort({ date: -1 });
+    const logs = await LogPaper.find()
+      .sort({ date: -1 })
+      .populate("studentId", "name studentIndex");
     res.json(logs);
   } catch (err) {
     console.error("❌ getAllLogs error:", err);

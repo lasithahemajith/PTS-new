@@ -23,7 +23,7 @@ export const getProfile = async (req, res) => {
 // Create user (Tutor only)
 export const createUser = async (req, res) => {
   try {
-    const { name, email, role, phone } = req.body;
+    const { name, email, role, phone, studentIndex, company } = req.body;
 
     if (!name || !email || !role) {
       return res.status(400).json({ error: "Name, email, and role required" });
@@ -37,13 +37,24 @@ export const createUser = async (req, res) => {
     const autoPassword = generateRandomPassword(10);
     const hashedPassword = await bcrypt.hash(autoPassword, 10);
 
-    const newUser = await User.create({
+    const userData = {
       name,
       email,
       role,
       password: hashedPassword,
       phone: phone || null,
-    });
+      mustChangePassword: true,
+    };
+
+    if (role === "Student" && studentIndex) {
+      userData.studentIndex = studentIndex;
+    }
+
+    if (role === "Mentor" && company) {
+      userData.company = company;
+    }
+
+    const newUser = await User.create(userData);
 
     res.status(201).json({
       message: "✅ User created successfully",
@@ -53,6 +64,8 @@ export const createUser = async (req, res) => {
         email: newUser.email,
         role: newUser.role,
         phone: newUser.phone,
+        studentIndex: newUser.studentIndex,
+        company: newUser.company,
       },
       generatedPassword: autoPassword,
       info: "Password auto-generated and securely stored (visible once to Tutor).",
@@ -172,5 +185,52 @@ export const getAssignedStudents = async (req, res) => {
   } catch (err) {
     console.error("getAssignedStudents error:", err);
     res.status(500).json({ error: "Failed to fetch assigned students" });
+  }
+};
+
+// Reset user password (Tutor only)
+export const resetUserPassword = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const newPassword = generateRandomPassword(10);
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    user.password = hashedPassword;
+    user.mustChangePassword = true;
+    await user.save();
+
+    res.json({
+      message: "✅ Password reset successfully",
+      generatedPassword: newPassword,
+      info: "New password generated. User must change it on next login.",
+    });
+  } catch (err) {
+    console.error("resetUserPassword error:", err);
+    res.status(500).json({ error: "Failed to reset password" });
+  }
+};
+
+// Change own password (any authenticated user)
+export const changeOwnPassword = async (req, res) => {
+  try {
+    const { newPassword } = req.body;
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ error: "Password must be at least 6 characters" });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    user.mustChangePassword = false;
+    await user.save();
+
+    res.json({ message: "✅ Password changed successfully" });
+  } catch (err) {
+    console.error("changeOwnPassword error:", err);
+    res.status(500).json({ error: "Failed to change password" });
   }
 };

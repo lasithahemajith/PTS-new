@@ -21,7 +21,13 @@ export const login = async ({ email, password }) => {
 
   const token = generateToken({ id: user.id, role: user.role });
 
-  const safeUser = { id: user.id, name: user.name, email: user.email, role: user.role };
+  const safeUser = {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    mustChangePassword: user.mustChangePassword,
+  };
 
   return { token, user: safeUser };
 };
