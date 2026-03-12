@@ -101,21 +101,33 @@ export default function MentorLogDetails() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
         className={`flex items-center gap-3 p-4 rounded-2xl ${
-          log.status === "Verified" || submitted
+          log.status === "Pending" && !submitted
+            ? "bg-amber-50 border border-amber-200"
+            : log.status === "Verified" || submitted
             ? "bg-green-50 border border-green-200"
-            : "bg-amber-50 border border-amber-200"
+            : "bg-blue-50 border border-blue-200"
         }`}
       >
-        {log.status === "Verified" || submitted ? (
-          <CheckCircle size={20} className="text-green-600 flex-shrink-0" />
-        ) : (
+        {log.status === "Pending" && !submitted ? (
           <Clock size={20} className="text-amber-600 flex-shrink-0 animate-pulse" />
+        ) : (
+          <CheckCircle size={20} className={`flex-shrink-0 ${
+            log.status === "Verified" || submitted ? "text-green-600" : "text-blue-600"
+          }`} />
         )}
         <div>
-          <p className={`text-sm font-semibold ${log.status === "Verified" || submitted ? "text-green-700" : "text-amber-700"}`}>
-            {log.status === "Verified" || submitted
+          <p className={`text-sm font-semibold ${
+            log.status === "Pending" && !submitted
+              ? "text-amber-700"
+              : log.status === "Verified" || submitted
+              ? "text-green-700"
+              : "text-blue-700"
+          }`}>
+            {log.status === "Pending" && !submitted
+              ? "This log is awaiting your verification"
+              : log.status === "Verified" || submitted
               ? "This log has been verified"
-              : "This log is awaiting your verification"}
+              : "All review processes completed"}
           </p>
           <p className="text-xs text-gray-500 mt-0.5">
             Submitted by {log.studentId?.name || "student"} on{" "}
