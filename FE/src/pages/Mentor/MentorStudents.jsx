@@ -38,8 +38,10 @@ export default function MentorStudents() {
             <thead className="bg-slate-50 border-b">
               <tr>
                 <th className="px-3 py-2 text-left">#</th>
+                <th className="px-3 py-2 text-left">Index</th>
                 <th className="px-3 py-2 text-left">Name</th>
                 <th className="px-3 py-2 text-left">Email</th>
+                <th className="px-3 py-2 text-left">Mobile Phone</th>
                 <th className="px-3 py-2 text-left">Course</th>
               </tr>
             </thead>
@@ -47,8 +49,10 @@ export default function MentorStudents() {
               {students.map((s, i) => (
                 <tr key={s.id} className="odd:bg-white even:bg-slate-50">
                   <td className="px-3 py-2 border-b">{i + 1}</td>
+                  <td className="px-3 py-2 border-b text-slate-700">{s.studentIndex || "—"}</td>
                   <td className="px-3 py-2 border-b font-medium">{s.name}</td>
                   <td className="px-3 py-2 border-b text-slate-700">{s.email}</td>
+                  <td className="px-3 py-2 border-b text-slate-700">{s.phone || "—"}</td>
                   <td className="px-3 py-2 border-b text-slate-600">
                     {s.course || "—"}
                   </td>
