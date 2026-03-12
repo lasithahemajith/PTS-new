@@ -1,7 +1,9 @@
 import LogPaper from "../models/logPaperModel.js";
 import MentorStudentMap from "../models/mentorStudentMapModel.js";
+import User from "../models/userModel.js";
 import path from "path";
 import { createAuditLog } from "../utils/auditLogger.js";
+import { createNotification } from "../utils/notificationHelper.js";
 
 /* =========================================================
    STUDENT SIDE
@@ -40,6 +42,23 @@ export const createLogPaper = async (req, res) => {
       attachments,
       status: "Pending",
     });
+
+    // Notify assigned mentor(s) about the new log submission
+    const studentUser = await User.findById(req.user.id).select("name");
+    if (!studentUser) {
+      console.warn(`⚠️ Could not find student user for id ${req.user.id} when creating log notification`);
+    }
+    const mentorMappings = await MentorStudentMap.find({ studentId: req.user.id }).select("mentorId");
+    if (mentorMappings.length > 0) {
+      await createNotification(
+        mentorMappings.map((m) => ({
+          userId: m.mentorId,
+          type: "log_submitted",
+          message: `${studentUser?.name || "A student"} submitted a new log paper.`,
+          relatedId: log._id,
+        }))
+      );
+    }
 
     res.status(201).json({
       message: "✅ Log paper created successfully",
@@ -117,6 +136,27 @@ export const verifyLogPaper = async (req, res) => {
 
     if (!updated) return res.status(404).json({ error: "Log not found" });
 
+    // Notify the student that their log was verified
+    await createNotification({
+      userId: updated.studentId,
+      type: "log_verified",
+      message: "Your log paper has been verified by your mentor.",
+      relatedId: updated._id,
+    });
+
+    // Notify all Tutors that a log is ready for review
+    const tutors = await User.find({ role: "Tutor" }).select("_id");
+    if (tutors.length > 0) {
+      await createNotification(
+        tutors.map((t) => ({
+          userId: t._id,
+          type: "log_verified",
+          message: "A log paper has been verified by a mentor and is ready for your review.",
+          relatedId: updated._id,
+        }))
+      );
+    }
+
     res.json({ message: "✅ Log verified successfully", updated });
 
     createAuditLog({
@@ -157,6 +197,14 @@ export const addTutorFeedback = async (req, res) => {
     );
 
     if (!updated) return res.status(404).json({ error: "Log not found" });
+
+    // Notify the student that the tutor added feedback
+    await createNotification({
+      userId: updated.studentId,
+      type: "log_reviewed",
+      message: "Your tutor has reviewed your log paper and added feedback.",
+      relatedId: updated._id,
+    });
 
     res.json({ message: "✅ Tutor feedback added successfully", updated });
 
