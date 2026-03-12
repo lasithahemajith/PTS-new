@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import Sidebar from "@/components/Sidebar";
 import Navbar from "@/components/NavBar";
+import SessionTimeoutModal from "@/components/SessionTimeoutModal";
 import { Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 
 export default function DashboardLayout() {
-  const { logout } = useAuth();
+  const { logout, showTimeoutWarning, warningSecondsRemaining, dismissTimeoutWarning } = useAuth();
   const navigate = useNavigate();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -28,6 +29,15 @@ export default function DashboardLayout() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
+      {/* Session timeout warning modal */}
+      {showTimeoutWarning && (
+        <SessionTimeoutModal
+          secondsRemaining={warningSecondsRemaining}
+          onStayLoggedIn={dismissTimeoutWarning}
+          onLogout={handleLogout}
+        />
+      )}
+
       {/* Sidebar */}
       <Sidebar onLogout={handleLogout} collapsed={isCollapsed} />
 
