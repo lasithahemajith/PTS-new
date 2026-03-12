@@ -118,7 +118,15 @@ export const getMappings = async (req, res) => {
       .populate("mentorId", "id name email")
       .populate("studentId", "id name email")
       .sort({ createdAt: -1 });
-    res.json(mappings);
+
+    const formattedMappings = mappings.map((m) => ({
+      id: m.id,
+      mentor: m.mentorId,
+      student: m.studentId,
+      createdAt: m.createdAt,
+    }));
+
+    res.json(formattedMappings);
   } catch (err) {
     console.error("getMappings error:", err);
     res.status(500).json({ error: "Failed to fetch mappings" });
