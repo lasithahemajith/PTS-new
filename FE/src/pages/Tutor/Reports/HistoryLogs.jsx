@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import API from "@/api/axios";
 import { useNavigate } from "react-router-dom";
-import { Loader2, Download, X } from "lucide-react";
+import { Loader2, Download, X, Search, Filter } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 export default function HistoryLogs() {
@@ -9,6 +9,10 @@ export default function HistoryLogs() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [studentNameFilter, setStudentNameFilter] = useState("");
+  const [studentIndexFilter, setStudentIndexFilter] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [exporting, setExporting] = useState(false);
   const navigate = useNavigate();
@@ -31,9 +35,41 @@ export default function HistoryLogs() {
     })();
   }, [token]);
 
-  const filtered = logs.filter((log) =>
-    statusFilter === "All" ? true : log.status === statusFilter
-  );
+  const hasActiveFilters =
+    statusFilter !== "All" ||
+    studentNameFilter.trim() !== "" ||
+    studentIndexFilter.trim() !== "" ||
+    dateFrom !== "" ||
+    dateTo !== "";
+
+  const clearFilters = () => {
+    setStatusFilter("All");
+    setStudentNameFilter("");
+    setStudentIndexFilter("");
+    setDateFrom("");
+    setDateTo("");
+  };
+
+  const fromDate = dateFrom ? (() => { const d = new Date(dateFrom); d.setHours(0, 0, 0, 0); return d; })() : null;
+  const toDate = dateTo ? (() => { const d = new Date(dateTo); d.setHours(23, 59, 59, 999); return d; })() : null;
+
+  const filtered = logs.filter((log) => {
+    if (statusFilter !== "All" && log.status !== statusFilter) return false;
+
+    const name = log.studentId?.name?.toLowerCase() ?? "";
+    if (studentNameFilter.trim() && !name.includes(studentNameFilter.trim().toLowerCase()))
+      return false;
+
+    const index = log.studentId?.studentIndex?.toLowerCase() ?? "";
+    if (studentIndexFilter.trim() && !index.includes(studentIndexFilter.trim().toLowerCase()))
+      return false;
+
+    const logDate = new Date(log.date);
+    if (fromDate && logDate < fromDate) return false;
+    if (toDate && logDate > toDate) return false;
+
+    return true;
+  });
 
   // ---------- Export helpers ----------
   const filenameFromDisposition = (disposition, fallback) => {
@@ -171,28 +207,92 @@ export default function HistoryLogs() {
       </div>
 
       {/* Filters */}
-      <div className="flex justify-between items-center mb-5 bg-white p-3 rounded-lg shadow-sm border border-indigo-100">
-        <label className="text-sm font-medium text-gray-700">
-          Filter by Status:
-        </label>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500"
-        >
-          <option value="All" className="text-gray-600">
-            All
-          </option>
-          <option value="Pending" className="text-yellow-600">
-            Pending
-          </option>
-          <option value="Verified" className="text-green-600">
-            Verified
-          </option>
-          <option value="Reviewed" className="text-blue-600">
-            Reviewed
-          </option>
-        </select>
+      <div className="mb-5 bg-white p-4 rounded-lg shadow-sm border border-indigo-100 space-y-3">
+        <div className="flex items-center gap-2 text-sm font-semibold text-indigo-700">
+          <Filter size={15} />
+          <span>Filters</span>
+          {hasActiveFilters && (
+            <button
+              onClick={clearFilters}
+              className="ml-auto flex items-center gap-1 text-xs text-red-500 hover:text-red-700 transition"
+            >
+              <X size={12} />
+              Clear all
+            </button>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {/* Student Name */}
+          <div className="relative">
+            <Search
+              size={14}
+              className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+            />
+            <input
+              type="text"
+              placeholder="Student name…"
+              value={studentNameFilter}
+              onChange={(e) => setStudentNameFilter(e.target.value)}
+              className="w-full border border-gray-300 rounded-md pl-8 pr-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            />
+          </div>
+
+          {/* Student Index */}
+          <div className="relative">
+            <Search
+              size={14}
+              className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+            />
+            <input
+              type="text"
+              placeholder="Student index…"
+              value={studentIndexFilter}
+              onChange={(e) => setStudentIndexFilter(e.target.value)}
+              className="w-full border border-gray-300 rounded-md pl-8 pr-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            />
+          </div>
+
+          {/* Status */}
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+          >
+            <option value="All">All Statuses</option>
+            <option value="Pending">Pending</option>
+            <option value="Verified">Verified</option>
+            <option value="Reviewed">Reviewed</option>
+          </select>
+
+          {/* Date Range */}
+          <div className="flex items-center gap-2">
+            <input
+              type="date"
+              value={dateFrom}
+              max={dateTo || undefined}
+              onChange={(e) => setDateFrom(e.target.value)}
+              title="From date"
+              className="flex-1 border border-gray-300 rounded-md px-2 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            />
+            <span className="text-gray-400 text-xs">–</span>
+            <input
+              type="date"
+              value={dateTo}
+              min={dateFrom || undefined}
+              onChange={(e) => setDateTo(e.target.value)}
+              title="To date"
+              className="flex-1 border border-gray-300 rounded-md px-2 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            />
+          </div>
+        </div>
+
+        {hasActiveFilters && (
+          <p className="text-xs text-gray-500">
+            Showing <span className="font-semibold text-indigo-700">{filtered.length}</span> of{" "}
+            <span className="font-semibold">{logs.length}</span> logs
+          </p>
+        )}
       </div>
 
       {/* Table */}
