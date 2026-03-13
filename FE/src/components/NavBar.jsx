@@ -1,4 +1,4 @@
-import { LogOut } from "lucide-react";
+import { LogOut, Menu } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import { getInitials, roleAvatarBg } from "@/utils/roleColors";
@@ -6,7 +6,7 @@ import NotificationBell from "@/components/NotificationBell";
 
 
 
-export default function Navbar({ onLogout }) {
+export default function Navbar({ onLogout, onMenuToggle }) {
   const { user } = useAuth();
   const avatarBg = roleAvatarBg[user?.role] || "bg-indigo-500";
 
@@ -14,10 +14,18 @@ export default function Navbar({ onLogout }) {
     <motion.nav
       initial={{ y: -30, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="w-full bg-white/90 backdrop-blur-md shadow-sm border-b border-indigo-100 px-6 py-3 flex justify-between items-center sticky top-0 z-40"
+      className="w-full bg-white/90 backdrop-blur-md shadow-sm border-b border-indigo-100 px-4 py-3 flex justify-between items-center sticky top-0 z-40"
     >
-      {/* Brand */}
+      {/* Left: Hamburger (mobile) + Brand */}
       <div className="flex items-center gap-2">
+        {/* Hamburger button — visible on mobile only */}
+        <button
+          onClick={onMenuToggle}
+          className="md:hidden p-2 rounded-lg text-indigo-700 hover:bg-indigo-50 transition"
+          aria-label="Toggle menu"
+        >
+          <Menu size={20} />
+        </button>
         <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
           <span className="text-white text-xs font-bold">EIT</span>
         </div>

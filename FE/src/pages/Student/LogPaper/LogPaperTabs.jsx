@@ -15,7 +15,7 @@ export default function LogPaperTabs() {
   return (
     <div className="min-h-[calc(100vh-80px)] bg-gradient-to-br from-indigo-50 via-white to-indigo-100 rounded-2xl border border-indigo-100 shadow-inner overflow-hidden">
       {/* Page header */}
-      <div className="bg-gradient-to-r from-indigo-700 to-indigo-500 px-8 py-6">
+      <div className="bg-gradient-to-r from-indigo-700 to-indigo-500 px-4 py-5 sm:px-8 sm:py-6">
         <motion.div
           initial={{ y: -8, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}

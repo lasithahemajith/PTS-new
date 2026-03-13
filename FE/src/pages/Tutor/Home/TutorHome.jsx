@@ -133,7 +133,7 @@ export default function TutorHome() {
           <h3 className="text-lg font-semibold text-indigo-800 mb-4 flex items-center gap-2">
             <Activity size={18} className="text-indigo-500" /> Quick Actions
           </h3>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <QuickAction
               to="/tutor/users"
               icon={<UserPlus size={20} />}
