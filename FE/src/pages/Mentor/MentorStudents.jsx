@@ -70,7 +70,7 @@ export default function MentorStudents() {
       )}
 
       {/* Table */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-md overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-md overflow-x-auto">
         {loading ? (
           <div className="flex justify-center items-center py-16">
             <Loader2 className="animate-spin text-indigo-500" size={32} />

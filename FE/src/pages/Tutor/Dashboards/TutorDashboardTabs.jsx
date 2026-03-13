@@ -41,12 +41,12 @@ export default function TutorDashboardTabs() {
       </div>
 
       {/* Tab Bar */}
-      <div className="flex gap-1 bg-indigo-50 border border-indigo-100 rounded-xl p-1 mb-6 w-fit">
+      <div className="flex gap-1 bg-indigo-50 border border-indigo-100 rounded-xl p-1 mb-6 overflow-x-auto scrollbar-none">
         {tabs.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`relative flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+            className={`relative flex flex-shrink-0 items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 whitespace-nowrap ${
               activeTab === tab.key
                 ? "bg-white text-indigo-700 shadow-sm"
                 : "text-gray-500 hover:text-indigo-600 hover:bg-white/60"

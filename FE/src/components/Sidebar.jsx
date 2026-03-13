@@ -10,6 +10,7 @@ import {
   User,
   Users,
   BarChart3,
+  X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
@@ -17,7 +18,7 @@ import { useAuth } from "@/context/AuthContext";
 import { getInitials, roleAvatarBg } from "@/utils/roleColors";
 
 
-export default function Sidebar() {
+export default function Sidebar({ mobileOpen, onMobileClose }) {
   const { user } = useAuth();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
@@ -50,10 +51,19 @@ export default function Sidebar() {
   const avatarBg = roleAvatarBg[user?.role] || "bg-indigo-400";
 
   return (
+    <div
+      className={`
+        fixed top-0 left-0 h-screen z-50
+        md:sticky md:top-0 md:z-auto
+        transition-transform duration-300 ease-in-out
+        md:translate-x-0
+        ${mobileOpen ? "translate-x-0" : "-translate-x-full"}
+      `}
+    >
     <motion.aside
       animate={{ width: collapsed ? 70 : 230 }}
       transition={{ duration: 0.3 }}
-      className="bg-gradient-to-b from-indigo-900 to-indigo-800 text-white flex flex-col shadow-2xl h-screen sticky top-0 overflow-hidden"
+      className="bg-gradient-to-b from-indigo-900 to-indigo-800 text-white flex flex-col shadow-2xl h-full overflow-hidden"
     >
       {/* Logo / Brand */}
       <div className="flex items-center justify-between px-3 py-4 border-b border-indigo-700/60">
@@ -69,12 +79,21 @@ export default function Sidebar() {
             <span className="text-sm font-bold text-white/90 tracking-wide">PTS</span>
           </motion.div>
         )}
+        {/* Desktop collapse button */}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="p-1.5 rounded-lg hover:bg-indigo-700 transition ml-auto"
+          className="p-1.5 rounded-lg hover:bg-indigo-700 transition ml-auto hidden md:flex"
           aria-label="Toggle sidebar"
         >
           {collapsed ? <ChevronRight size={17} /> : <ChevronLeft size={17} />}
+        </button>
+        {/* Mobile close button */}
+        <button
+          onClick={onMobileClose}
+          className="p-1.5 rounded-lg hover:bg-indigo-700 transition ml-auto md:hidden"
+          aria-label="Close menu"
+        >
+          <X size={17} />
         </button>
       </div>
 
@@ -105,6 +124,7 @@ export default function Sidebar() {
               <Link
                 key={item.path}
                 to={item.path}
+                onClick={onMobileClose}
                 className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
                   isActive
                     ? "bg-white/15 text-white shadow-sm"
@@ -169,6 +189,7 @@ export default function Sidebar() {
                         <Link
                           key={sub.path}
                           to={sub.path}
+                          onClick={onMobileClose}
                           className={`block px-3 py-1.5 rounded-md text-sm ${
                             active
                               ? "bg-white/15 text-white"
@@ -191,5 +212,6 @@ export default function Sidebar() {
         {!collapsed && <p className="opacity-60">EIT Practicum &copy; 2025</p>}
       </div>
     </motion.aside>
+    </div>
   );
 }
