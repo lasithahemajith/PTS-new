@@ -24,6 +24,7 @@ import MentorAttendance from "@/pages/Mentor/MentorAttendance";
 // TUTOR
 import TutorHome from "@/pages/Tutor/Home/TutorHome";
 import UserTabs from "@/pages/Tutor/Users/UserTabs";
+import UserDetail from "@/pages/Tutor/Users/UserDetail";
 import ReportsTabs from "@/pages/Tutor/Reports/ReportsTabs";
 import TutorFeedback from "@/pages/Tutor/Reports/TutorFeedback";
 import TutorDashboardTabs from "@/pages/Tutor/Dashboards/TutorDashboardTabs";
@@ -172,6 +173,14 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute allowedRoles={["Tutor"]}>
               <UserTabs />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="tutor/users/:id"
+          element={
+            <ProtectedRoute allowedRoles={["Tutor"]}>
+              <UserDetail />
             </ProtectedRoute>
           }
         />

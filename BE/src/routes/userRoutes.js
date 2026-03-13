@@ -6,6 +6,7 @@ import { requireRole } from "../middlewares/roleMiddleware.js";
 import {
     createUser,
     getUsersByRole,
+    getUserById,
     mapMentorToStudent,
     getMappings,
     unmapMentorFromStudent,
@@ -20,6 +21,15 @@ const router = express.Router();
 const passwordLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 10,
+  message: { error: "Too many requests. Please try again later." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// General rate limiter for data-fetching endpoints
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 200,
   message: { error: "Too many requests. Please try again later." },
   standardHeaders: true,
   legacyHeaders: false,
@@ -47,5 +57,8 @@ router.get("/", getUsersByRole);
 
 // List mappings (restrict to Tutor if you prefer)
 router.get("/mappings", getMappings);
+
+// Get single user by ID (must come after all specific /path routes)
+router.get("/:userId", generalLimiter, getUserById);
 
 export default router;

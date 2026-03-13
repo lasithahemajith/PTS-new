@@ -186,7 +186,7 @@ export const getMappings = async (req, res) => {
   try {
     const mappings = await MentorStudentMap.find()
       .populate("mentorId", "id name email")
-      .populate("studentId", "id name email")
+      .populate("studentId", "id name email studentIndex")
       .sort({ createdAt: -1 });
 
     const formattedMappings = mappings.map((m) => ({
@@ -200,6 +200,21 @@ export const getMappings = async (req, res) => {
   } catch (err) {
     console.error("getMappings error:", err);
     res.status(500).json({ error: "Failed to fetch mappings" });
+  }
+};
+
+// Get user by ID
+export const getUserById = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId).select(
+      "name email role phone studentIndex company createdAt"
+    );
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.json(user);
+  } catch (err) {
+    console.error("getUserById error:", err);
+    res.status(500).json({ error: "Failed to fetch user" });
   }
 };
 
