@@ -21,6 +21,9 @@ import MentorReports from "@/pages/Mentor/Reports/MentorReports";
 import MentorLogDetails from "@/pages/Mentor/Reports/MentorLogDetails";
 import MentorAttendance from "@/pages/Mentor/MentorAttendance";
 
+// MESSAGES
+import MessagesPage from "@/pages/Messages/MessagesPage";
+
 // TUTOR
 import TutorHome from "@/pages/Tutor/Home/TutorHome";
 import UserTabs from "@/pages/Tutor/Users/UserTabs";
@@ -206,6 +209,16 @@ export default function AppRoutes() {
         </Route>
 
         <Route path="/tutor/dashboards" element={<TutorDashboardTabs />} />
+
+        {/* ---------- MESSAGES (all roles) ---------- */}
+        <Route
+          path="messages"
+          element={
+            <ProtectedRoute allowedRoles={["Student", "Mentor", "Tutor"]}>
+              <MessagesPage />
+            </ProtectedRoute>
+          }
+        />
 
       </Route>
 

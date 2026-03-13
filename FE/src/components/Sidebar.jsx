@@ -10,6 +10,7 @@ import {
   User,
   Users,
   BarChart3,
+  MessageSquare,
   X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -32,6 +33,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }) {
       { label: "Users", path: "/tutor/users", icon: <User size={18} /> },
       { label: "Reports", path: "/tutor/reports", icon: <FileText size={18} /> },
       { label: "Dashboards", path: "/tutor/dashboards", icon: <BarChart3 size={18} /> },
+      { label: "Messages", path: "/messages", icon: <MessageSquare size={18} /> },
     ];
   } else if (user?.role === "Mentor") {
     navItems = [
@@ -39,12 +41,14 @@ export default function Sidebar({ mobileOpen, onMobileClose }) {
       { label: "Students", path: "/mentor/students", icon: <Users size={18} /> },
       { label: "Log Reports", path: "/mentor/reports", icon: <FileText size={18} /> },
       { label: "Attendance", path: "/mentor/attendance", icon: <ClipboardList size={18} /> },
+      { label: "Messages", path: "/messages", icon: <MessageSquare size={18} /> },
     ];
   } else if (user?.role === "Student") {
     navItems = [
       { label: "Home", path: "/student/home", icon: <Home size={18} /> },
       { label: "My Logs", path: "/student/logpapers", icon: <ClipboardList size={18} /> },
       { label: "Attendance", path: "/student/attendance", icon: <ClipboardList size={18} /> },
+      { label: "Messages", path: "/messages", icon: <MessageSquare size={18} /> },
     ];
   }
 
