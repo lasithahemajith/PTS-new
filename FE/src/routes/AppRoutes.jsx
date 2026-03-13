@@ -232,6 +232,10 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute allowedRoles={["Student", "Mentor", "Tutor"]}>
               <MyProfile />
+            </ProtectedRoute>
+          }
+        />
+
         {/* ---------- ABOUT PTS (all roles) ---------- */}
         <Route
           path="about"
