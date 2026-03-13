@@ -98,7 +98,11 @@ export default function Sidebar({ mobileOpen, onMobileClose }) {
       </div>
 
       {/* User Info */}
-      <div className={`flex items-center gap-3 px-3 py-4 border-b border-indigo-700/60 ${collapsed ? "justify-center" : ""}`}>
+      <Link
+        to="/profile"
+        onClick={onMobileClose}
+        className={`flex items-center gap-3 px-3 py-4 border-b border-indigo-700/60 hover:bg-white/10 transition ${collapsed ? "justify-center" : ""}`}
+      >
         <div
           className={`w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center text-sm font-bold text-white shadow-md ${avatarBg}`}
         >
@@ -112,7 +116,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }) {
             <span className="text-xs text-indigo-300">{user?.role}</span>
           </div>
         )}
-      </div>
+      </Link>
 
       {/* Nav Items */}
       <nav className="flex flex-col flex-1 px-2 py-4 space-y-1 overflow-y-auto scrollbar-thin scrollbar-thumb-indigo-600 scrollbar-track-indigo-800">

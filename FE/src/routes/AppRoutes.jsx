@@ -24,6 +24,9 @@ import MentorAttendance from "@/pages/Mentor/MentorAttendance";
 // MESSAGES
 import MessagesPage from "@/pages/Messages/MessagesPage";
 
+// PROFILE
+import MyProfile from "@/pages/Profile/MyProfile";
+
 // TUTOR
 import TutorHome from "@/pages/Tutor/Home/TutorHome";
 import UserTabs from "@/pages/Tutor/Users/UserTabs";
@@ -216,6 +219,16 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute allowedRoles={["Student", "Mentor", "Tutor"]}>
               <MessagesPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* ---------- MY PROFILE (all roles) ---------- */}
+        <Route
+          path="profile"
+          element={
+            <ProtectedRoute allowedRoles={["Student", "Mentor", "Tutor"]}>
+              <MyProfile />
             </ProtectedRoute>
           }
         />
