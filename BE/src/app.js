@@ -14,6 +14,7 @@ import attendanceRoutes from "./routes/attendanceRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import auditLogRoutes from "./routes/auditLogRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
+import messageRoutes from "./routes/messageRoutes.js";
 
 
 dotenv.config();
@@ -41,6 +42,7 @@ app.use("/attendance", attendanceRoutes);
 app.use("/dashboard", dashboardRoutes);
 app.use("/audit", auditLogRoutes);
 app.use("/notifications", notificationRoutes);
+app.use("/messages", messageRoutes);
 
 
 // Root health check

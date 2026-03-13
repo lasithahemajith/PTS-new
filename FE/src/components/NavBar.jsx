@@ -1,8 +1,10 @@
 import { LogOut, Menu } from "lucide-react";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { getInitials, roleAvatarBg } from "@/utils/roleColors";
 import NotificationBell from "@/components/NotificationBell";
+import MessageBell from "@/components/MessageBell";
 
 
 
@@ -36,9 +38,13 @@ export default function Navbar({ onLogout, onMenuToggle }) {
 
       <div className="flex items-center gap-3">
         <NotificationBell />
+        <MessageBell />
 
         {/* User info + avatar */}
-        <div className="flex items-center gap-2 pl-2 border-l border-gray-200">
+        <Link
+          to="/profile"
+          className="flex items-center gap-2 pl-2 border-l border-gray-200 hover:opacity-80 transition"
+        >
           <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-sm ${avatarBg}`}>
             {getInitials(user?.name)}
           </div>
@@ -46,7 +52,7 @@ export default function Navbar({ onLogout, onMenuToggle }) {
             <p className="text-sm font-semibold text-gray-800 leading-tight">{user?.name}</p>
             <p className="text-xs text-gray-400">{user?.role}</p>
           </div>
-        </div>
+        </Link>
 
         <motion.button
           whileHover={{ scale: 1.05 }}

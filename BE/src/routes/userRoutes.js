@@ -38,7 +38,7 @@ const generalLimiter = rateLimit({
 // All require auth
 router.use(verifyToken);
 
-router.get("/profile", verifyToken, getProfile);
+router.get("/profile", generalLimiter, verifyToken, getProfile);
 
 // ✅ Change own password (first login or self-service)
 router.post("/change-password", passwordLimiter, changeOwnPassword);

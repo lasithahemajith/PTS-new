@@ -14,7 +14,9 @@ const generateRandomPassword = (length = 10) => {
 // Get profile
 export const getProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select("id name email role");
+    const user = await User.findById(req.user.id).select(
+      "id name email role phone studentIndex company createdAt"
+    );
     res.json(user);
   } catch (err) {
     console.error("getProfile error:", err);
