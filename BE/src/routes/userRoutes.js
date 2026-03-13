@@ -6,6 +6,7 @@ import { requireRole } from "../middlewares/roleMiddleware.js";
 import {
     createUser,
     getUsersByRole,
+    getUserById,
     mapMentorToStudent,
     getMappings,
     unmapMentorFromStudent,
@@ -47,5 +48,8 @@ router.get("/", getUsersByRole);
 
 // List mappings (restrict to Tutor if you prefer)
 router.get("/mappings", getMappings);
+
+// Get single user by ID (must come after all specific /path routes)
+router.get("/:userId", getUserById);
 
 export default router;
