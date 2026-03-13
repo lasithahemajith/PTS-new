@@ -94,6 +94,9 @@ export default function AppRoutes() {
           </ProtectedRoute>
         }
       >
+        {/* ---------- INDEX REDIRECT ---------- */}
+        <Route index element={<Navigate to={getHomeRoute()} replace />} />
+
         {/* ---------- STUDENT ROUTES ---------- */}
         <Route
           path="student/home"
