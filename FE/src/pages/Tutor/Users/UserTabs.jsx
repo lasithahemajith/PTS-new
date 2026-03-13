@@ -28,13 +28,13 @@ export default function UserTabs() {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex border-b mb-6">
+    <div className="p-4 md:p-6">
+      <div className="flex overflow-x-auto border-b mb-6 gap-1 pb-px scrollbar-none">
         {tabs.map(tab => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 font-medium ${
+            className={`flex-shrink-0 px-4 py-2 font-medium text-sm whitespace-nowrap ${
               activeTab === tab.key
                 ? "border-b-2 border-indigo-600 text-indigo-700"
                 : "text-gray-500 hover:text-indigo-500"

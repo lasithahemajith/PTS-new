@@ -116,8 +116,8 @@ export default function MentorReports() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-x-auto">
+        <table className="min-w-full text-sm">
           <thead>
             <tr className="bg-indigo-700 text-white text-left">
               <th className="px-4 py-3">Student</th>

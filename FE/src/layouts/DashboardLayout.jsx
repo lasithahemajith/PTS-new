@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import Navbar from "@/components/NavBar";
 import SessionTimeoutModal from "@/components/SessionTimeoutModal";
@@ -8,24 +8,12 @@ import { useAuth } from "@/context/AuthContext";
 export default function DashboardLayout() {
   const { logout, showTimeoutWarning, warningSecondsRemaining, dismissTimeoutWarning } = useAuth();
   const navigate = useNavigate();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
     navigate("/login");
   };
-
-  // Auto-collapse sidebar when scrolling down
-  useEffect(() => {
-    let lastScrollTop = 0;
-    const handleScroll = () => {
-      const scrollTop = window.scrollY || document.documentElement.scrollTop;
-      setIsCollapsed(scrollTop > lastScrollTop && scrollTop > 50); // collapse when scrolling down
-      lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
@@ -38,13 +26,21 @@ export default function DashboardLayout() {
         />
       )}
 
+      {/* Mobile backdrop overlay */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <Sidebar onLogout={handleLogout} collapsed={isCollapsed} />
+      <Sidebar mobileOpen={mobileOpen} onMobileClose={() => setMobileOpen(false)} />
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col h-full">
-        <Navbar onLogout={handleLogout} />
-        <main className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 flex flex-col h-full min-w-0">
+        <Navbar onLogout={handleLogout} onMenuToggle={() => setMobileOpen(!mobileOpen)} />
+        <main className="flex-1 overflow-y-auto p-4 md:p-6">
           <Outlet />
         </main>
       </div>
