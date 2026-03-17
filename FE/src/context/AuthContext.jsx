@@ -28,6 +28,17 @@ export const AuthProvider = ({ children }) => {
     try {
       const storedUser = localStorage.getItem("user");
       const storedToken = localStorage.getItem("token");
+      const lastActivityTime = localStorage.getItem("lastActivityTime");
+
+      // If a token exists, check whether the inactivity period has already elapsed
+      if (storedToken && storedToken !== "undefined" && lastActivityTime) {
+        const elapsed = Date.now() - parseInt(lastActivityTime, 10);
+        if (elapsed >= INACTIVITY_TIMEOUT_MS) {
+          // Session expired due to inactivity — clear stored data and bail out
+          localStorage.clear();
+          return;
+        }
+      }
 
       if (storedUser && storedUser !== "undefined") {
         setUser(JSON.parse(storedUser));
@@ -49,6 +60,7 @@ export const AuthProvider = ({ children }) => {
     setToken(tokenData);
     localStorage.setItem("user", JSON.stringify(userData));
     localStorage.setItem("token", tokenData);
+    localStorage.setItem("lastActivityTime", Date.now().toString());
   };
 
   // Logout
@@ -73,6 +85,9 @@ export const AuthProvider = ({ children }) => {
     setShowTimeoutWarning(false);
     setWarningSecondsRemaining(WARNING_BEFORE_MS / 1000);
 
+    // Persist last activity time so that page refreshes respect the inactivity window
+    localStorage.setItem("lastActivityTime", Date.now().toString());
+
     // Schedule warning
     inactivityTimerRef.current = setTimeout(() => {
       setShowTimeoutWarning(true);
@@ -95,8 +110,40 @@ export const AuthProvider = ({ children }) => {
       return;
     }
 
-    // Start tracking immediately on login
-    resetInactivityTimer();
+    // Calculate remaining idle time, accounting for time already spent since last activity.
+    // If lastActivityTime is absent (e.g. existing session before this feature was added),
+    // default to now so the user gets a fresh 30-minute window instead of an instant logout.
+    const storedLastActivity = localStorage.getItem("lastActivityTime");
+    const lastActivityTime = storedLastActivity ? parseInt(storedLastActivity, 10) : Date.now();
+    const elapsed = Date.now() - lastActivityTime;
+    const remainingTime = INACTIVITY_TIMEOUT_MS - elapsed;
+
+    if (remainingTime <= 0) {
+      // Session already expired due to inactivity (e.g. browser was closed and reopened)
+      logoutCallbackRef.current();
+      return;
+    }
+
+    clearTimeout(inactivityTimerRef.current);
+    clearTimeout(warningTimerRef.current);
+
+    if (remainingTime <= WARNING_BEFORE_MS) {
+      // We are already inside the warning window — show the modal immediately
+      setShowTimeoutWarning(true);
+      setWarningSecondsRemaining(Math.floor(remainingTime / 1000));
+      warningTimerRef.current = setTimeout(() => {
+        logoutCallbackRef.current();
+      }, remainingTime);
+    } else {
+      // Schedule the warning at the appropriate point in the future
+      inactivityTimerRef.current = setTimeout(() => {
+        setShowTimeoutWarning(true);
+        setWarningSecondsRemaining(WARNING_BEFORE_MS / 1000);
+        warningTimerRef.current = setTimeout(() => {
+          logoutCallbackRef.current();
+        }, WARNING_BEFORE_MS);
+      }, remainingTime - WARNING_BEFORE_MS);
+    }
 
     ACTIVITY_EVENTS.forEach((event) =>
       window.addEventListener(event, resetInactivityTimer, { passive: true })
