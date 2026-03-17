@@ -2,6 +2,8 @@ import Attendance from "../models/attendanceModel.js";
 import LogPaper from "../models/logPaperModel.js";
 import MentorFeedback from "../models/mentorFeedbackModel.js";
 import TutorFeedback from "../models/tutorFeedbackModel.js";
+import User from "../models/userModel.js";
+import MentorStudentMap from "../models/mentorStudentMapModel.js";
 
 /* -------------------------------------------------------------------------- */
 /*  1. Attendance Overview – MongoDB                                           */
@@ -219,5 +221,127 @@ export const getStudentProgress = async (req, res) => {
   } catch (err) {
     console.error("getStudentProgress error:", err);
     res.status(500).json({ error: "Failed to fetch student progress" });
+  }
+};
+
+/* -------------------------------------------------------------------------- */
+/*  4. Mentor Activity Report – MongoDB                                        */
+/* -------------------------------------------------------------------------- */
+export const getMentorActivity = async (req, res) => {
+  try {
+    if (req.user.role !== "Tutor")
+      return res.status(403).json({ error: "Access denied" });
+
+    const { from, to, mentor, approved } = req.query;
+
+    // Build date filter for mentor feedbacks
+    const feedbackFilter = {};
+    if (from || to) {
+      feedbackFilter.createdAt = {};
+      if (from) feedbackFilter.createdAt.$gte = new Date(from);
+      if (to) {
+        const toDate = new Date(to);
+        toDate.setHours(23, 59, 59, 999);
+        feedbackFilter.createdAt.$lte = toDate;
+      }
+    }
+    if (approved !== undefined && approved !== "All") {
+      feedbackFilter.approved = approved === "true";
+    }
+
+    // Fetch all mentors
+    const mentors = await User.find({ role: "Mentor" }, "name email phone company").lean();
+    const mentorIds = mentors.map((m) => m._id);
+
+    // Fetch all mentor feedbacks (with student and log details)
+    const feedbacks = await MentorFeedback.find({ ...feedbackFilter, mentorId: { $in: mentorIds } })
+      .populate("mentorId", "name email")
+      .populate("studentId", "name studentIndex")
+      .populate("logPaperId", "date activity totalHours status")
+      .lean();
+
+    // Fetch assigned student counts per mentor (scoped to known mentors)
+    const maps = await MentorStudentMap.find({ mentorId: { $in: mentorIds } }).lean();
+    const assignedCountMap = {};
+    maps.forEach((m) => {
+      const mid = m.mentorId.toString();
+      assignedCountMap[mid] = (assignedCountMap[mid] || 0) + 1;
+    });
+
+    // Group feedbacks by mentorId
+    const feedbacksByMentor = {};
+    feedbacks.forEach((fb) => {
+      const mid = fb.mentorId?._id?.toString() || fb.mentorId?.toString();
+      if (!mid) return;
+      if (!feedbacksByMentor[mid]) feedbacksByMentor[mid] = [];
+      feedbacksByMentor[mid].push(fb);
+    });
+
+    // Build result per mentor
+    let data = mentors.map((m) => {
+      const mid = m._id.toString();
+      const mFeedbacks = feedbacksByMentor[mid] || [];
+      const approvedCount = mFeedbacks.filter((f) => f.approved).length;
+      const pendingCount = mFeedbacks.length - approvedCount;
+      const lastActivity =
+        mFeedbacks.length > 0
+          ? mFeedbacks.reduce((latestTs, f) => {
+              const ts = new Date(f.createdAt).getTime();
+              return ts > latestTs ? ts : latestTs;
+            }, 0)
+          : null;
+
+      return {
+        _id: mid,
+        name: m.name,
+        email: m.email,
+        phone: m.phone || null,
+        company: m.company || null,
+        assignedStudents: assignedCountMap[mid] || 0,
+        totalFeedbacks: mFeedbacks.length,
+        approvedFeedbacks: approvedCount,
+        pendingFeedbacks: pendingCount,
+        lastActivityDate: lastActivity ? new Date(lastActivity) : null,
+        feedbacks: mFeedbacks.map((f) => ({
+          _id: f._id,
+          studentName: f.studentId?.name || "—",
+          studentIndex: f.studentId?.studentIndex || "—",
+          logDate: f.logPaperId?.date || null,
+          logActivity: f.logPaperId?.activity || "—",
+          logHours: f.logPaperId?.totalHours ?? null,
+          logStatus: f.logPaperId?.status || "—",
+          comment: f.comment,
+          approved: f.approved,
+          createdAt: f.createdAt,
+        })),
+      };
+    });
+
+    // Filter by mentor name
+    if (mentor && mentor.trim()) {
+      const q = mentor.trim().toLowerCase();
+      data = data.filter((m) => m.name.toLowerCase().includes(q));
+    }
+
+    // Summary stats
+    const totalMentors = data.length;
+    const activeMentors = data.filter((m) => m.totalFeedbacks > 0).length;
+    const totalFeedbacks = data.reduce((s, m) => s + m.totalFeedbacks, 0);
+    const totalApproved = data.reduce((s, m) => s + m.approvedFeedbacks, 0);
+    const totalPending = data.reduce((s, m) => s + m.pendingFeedbacks, 0);
+
+    res.json({
+      summary: {
+        totalMentors,
+        activeMentors,
+        totalFeedbacks,
+        totalApproved,
+        totalPending,
+      },
+      data,
+    });
+  } catch (err) {
+    console.error("getMentorActivity error:", err);
+    res.status(500).json({ error: "Failed to fetch mentor activity" });
   }
 };
