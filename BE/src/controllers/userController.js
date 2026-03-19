@@ -268,6 +268,101 @@ export const getAssignedStudents = async (req, res) => {
   }
 };
 
+// Edit user (Tutor only)
+export const editUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { name, email, phone, studentIndex, company } = req.body;
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    // Check email uniqueness if changed
+    if (email && email !== user.email) {
+      const existing = await User.findOne({ email });
+      if (existing) return res.status(400).json({ error: "Email already in use" });
+      user.email = email;
+    }
+
+    if (name) user.name = name;
+    if (phone !== undefined) user.phone = phone || null;
+
+    if (user.role === "Student" && studentIndex !== undefined) {
+      user.studentIndex = studentIndex || null;
+    }
+
+    if (user.role === "Mentor" && company !== undefined) {
+      user.company = company || null;
+    }
+
+    await user.save();
+
+    res.json({
+      message: "✅ User updated successfully",
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        phone: user.phone,
+        studentIndex: user.studentIndex,
+        company: user.company,
+      },
+    });
+
+    createAuditLog({
+      userId: req.user.id,
+      userName: req.user.name || req.user.id,
+      userRole: req.user.role,
+      action: "EDIT_USER",
+      resource: "user",
+      resourceId: userId,
+      details: `Edited user: ${user.name} (${user.email})`,
+      ipAddress: req.ip || req.headers["x-forwarded-for"] || null,
+    });
+  } catch (err) {
+    console.error("editUser error:", err);
+    res.status(500).json({ error: "Failed to update user" });
+  }
+};
+
+// Delete user (Tutor only)
+export const deleteUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    // Prevent deleting another Tutor account
+    if (user.role === "Tutor") {
+      return res.status(403).json({ error: "Cannot delete a Tutor account" });
+    }
+
+    // Remove mentor-student mappings involving this user
+    await MentorStudentMap.deleteMany({
+      $or: [{ mentorId: user._id }, { studentId: user._id }],
+    });
+
+    await User.findByIdAndDelete(userId);
+
+    res.json({ message: "✅ User deleted successfully" });
+
+    createAuditLog({
+      userId: req.user.id,
+      userName: req.user.name || req.user.id,
+      userRole: req.user.role,
+      action: "DELETE_USER",
+      resource: "user",
+      resourceId: userId,
+      details: `Deleted ${user.role} account: ${user.name} (${user.email})`,
+      ipAddress: req.ip || req.headers["x-forwarded-for"] || null,
+    });
+  } catch (err) {
+    console.error("deleteUser error:", err);
+    res.status(500).json({ error: "Failed to delete user" });
+  }
+};
+
 // Reset user password (Tutor only)
 export const resetUserPassword = async (req, res) => {
   try {

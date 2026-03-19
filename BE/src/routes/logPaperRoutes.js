@@ -46,6 +46,14 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
+const logReadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  message: { error: "Too many requests. Please try again later." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // ✅ Routes
 router.post("/", verifyToken, upload.array("attachments"), createLogPaper);
 router.get("/my", verifyToken, getMyLogPapers);
@@ -53,7 +61,7 @@ router.patch("/:id/verify", verifyToken, verifyLogPaper);
 router.patch("/:id/feedback", verifyToken, addTutorFeedback);
 router.get("/all", verifyToken, getAllLogs);
 router.get("/mentor/reports", verifyToken, getMentorLogs);
-router.get("/:id", verifyToken, getLogPaperById);
+router.get("/:id", logReadLimiter, verifyToken, getLogPaperById);
 router.put("/:id", logMutationLimiter, verifyToken, updateLogPaper);
 router.delete("/:id", logMutationLimiter, verifyToken, deleteLogPaper);
 
