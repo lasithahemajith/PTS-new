@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Search } from "lucide-react";
+import { Search, Pencil, Trash2 } from "lucide-react";
 import API from "@/api/axios";
 
 export default function MentorsList() {
@@ -9,6 +9,16 @@ export default function MentorsList() {
   const [confirmEmail, setConfirmEmail] = useState("");
   const [resetResult, setResetResult] = useState(null);
   const [resetting, setResetting] = useState(false);
+
+  // Edit state
+  const [editModal, setEditModal] = useState(null);
+  const [editForm, setEditForm] = useState({});
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState("");
+
+  // Delete state
+  const [deleteModal, setDeleteModal] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     fetchMentors();
@@ -45,6 +55,50 @@ export default function MentorsList() {
       setResetResult({ error: err.response?.data?.error || "Reset failed" });
     } finally {
       setResetting(false);
+    }
+  };
+
+  // Edit handlers
+  const openEditModal = (mentor) => {
+    setEditModal(mentor);
+    setEditForm({ name: mentor.name, email: mentor.email, phone: mentor.phone || "", company: mentor.company || "" });
+    setEditError("");
+  };
+
+  const closeEditModal = () => {
+    setEditModal(null);
+    setEditForm({});
+    setEditError("");
+  };
+
+  const handleEditSave = async () => {
+    setEditSaving(true);
+    setEditError("");
+    try {
+      await API.put(`/users/${editModal._id}`, editForm);
+      closeEditModal();
+      fetchMentors();
+    } catch (err) {
+      setEditError(err.response?.data?.error || "Failed to update mentor");
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
+  // Delete handlers
+  const openDeleteModal = (mentor) => setDeleteModal(mentor);
+  const closeDeleteModal = () => setDeleteModal(null);
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      await API.delete(`/users/${deleteModal._id}`);
+      closeDeleteModal();
+      fetchMentors();
+    } catch (err) {
+      alert(err.response?.data?.error || "Failed to delete mentor");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -95,12 +149,26 @@ export default function MentorsList() {
                   {new Date(m.createdAt).toLocaleDateString()}
                 </td>
                 <td className="border p-2">
-                  <button
-                    onClick={() => openResetModal(m)}
-                    className="text-xs px-2 py-1 bg-orange-100 text-orange-700 border border-orange-300 rounded hover:bg-orange-200"
-                  >
-                    Reset Password
-                  </button>
+                  <div className="flex items-center justify-center gap-1 flex-wrap">
+                    <button
+                      onClick={() => openResetModal(m)}
+                      className="text-xs px-2 py-1 bg-orange-100 text-orange-700 border border-orange-300 rounded hover:bg-orange-200"
+                    >
+                      Reset Password
+                    </button>
+                    <button
+                      onClick={() => openEditModal(m)}
+                      className="text-xs px-2 py-1 bg-blue-100 text-blue-700 border border-blue-300 rounded hover:bg-blue-200 flex items-center gap-1"
+                    >
+                      <Pencil size={12} /> Edit
+                    </button>
+                    <button
+                      onClick={() => openDeleteModal(m)}
+                      className="text-xs px-2 py-1 bg-red-100 text-red-700 border border-red-300 rounded hover:bg-red-200 flex items-center gap-1"
+                    >
+                      <Trash2 size={12} /> Delete
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -171,6 +239,96 @@ export default function MentorsList() {
                 <button onClick={closeResetModal} className="w-full py-2 rounded border text-gray-700 hover:bg-gray-50">Close</button>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {editModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+            <h4 className="text-lg font-bold text-gray-800 mb-4">Edit Mentor</h4>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                <input
+                  type="text"
+                  value={editForm.name || ""}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  className="w-full border p-2 rounded text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input
+                  type="email"
+                  value={editForm.email || ""}
+                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                  className="w-full border p-2 rounded text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                <input
+                  type="text"
+                  value={editForm.phone || ""}
+                  onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                  className="w-full border p-2 rounded text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Company</label>
+                <input
+                  type="text"
+                  value={editForm.company || ""}
+                  onChange={(e) => setEditForm({ ...editForm, company: e.target.value })}
+                  className="w-full border p-2 rounded text-sm"
+                />
+              </div>
+              {editError && <p className="text-red-600 text-sm">❌ {editError}</p>}
+            </div>
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={handleEditSave}
+                disabled={editSaving}
+                className="flex-1 py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700 disabled:opacity-40"
+              >
+                {editSaving ? "Saving..." : "Save Changes"}
+              </button>
+              <button
+                onClick={closeEditModal}
+                className="flex-1 py-2 rounded border text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm">
+            <h4 className="text-lg font-bold text-gray-800 mb-2">Delete Mentor</h4>
+            <p className="text-sm text-gray-600 mb-4">
+              Are you sure you want to delete <strong>{deleteModal.name}</strong>? This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex-1 py-2 rounded bg-red-600 text-white font-semibold hover:bg-red-700 disabled:opacity-40"
+              >
+                {deleting ? "Deleting..." : "Yes, Delete"}
+              </button>
+              <button
+                onClick={closeDeleteModal}
+                className="flex-1 py-2 rounded border text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}
