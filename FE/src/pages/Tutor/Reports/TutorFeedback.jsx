@@ -105,12 +105,7 @@ export default function TutorFeedback() {
         <h3 className="text-lg font-semibold text-indigo-800 mb-3">
           🧾 Student Log
         </h3>
-        <p>
-          <strong>Student:</strong>{" "}
-          {log.studentId?.name
-            ? `${log.studentId.name}${log.studentId.studentIndex ? ` (${log.studentId.studentIndex})` : ""}`
-            : log.studentId || "—"}
-        </p>
+        <p><strong>Student ID:</strong> {log.studentId}</p>
         <p><strong>Date:</strong> {new Date(log.date).toLocaleDateString()}</p>
         <p><strong>Activity:</strong> {log.activity}</p>
         <p><strong>Total Hours:</strong> {log.totalHours ?? "-"}</p>
