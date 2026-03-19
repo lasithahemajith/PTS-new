@@ -13,8 +13,6 @@ import {
     getAssignedStudents,
     resetUserPassword,
     changeOwnPassword,
-    editUser,
-    deleteUser,
   } from "../controllers/userController.js";
   
 const router = express.Router();
@@ -53,8 +51,6 @@ router.post("/", requireRole("Tutor"), createUser);
 router.post("/map", requireRole("Tutor"), mapMentorToStudent);
 router.delete("/map", requireRole("Tutor"), unmapMentorFromStudent);
 router.post("/:userId/reset-password", passwordLimiter, requireRole("Tutor"), resetUserPassword);
-router.put("/:userId", generalLimiter, requireRole("Tutor"), editUser);
-router.delete("/:userId", generalLimiter, requireRole("Tutor"), deleteUser);
 
 // Anyone authenticated can list users (or restrict to Tutor if you prefer)
 router.get("/", getUsersByRole);

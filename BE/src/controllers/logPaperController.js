@@ -285,7 +285,7 @@ export const getMentorLogs = async (req, res) => {
 export const getLogPaperById = async (req, res) => {
   try {
     const { id } = req.params;
-    const log = await LogPaper.findById(id).populate("studentId", "name studentIndex");
+    const log = await LogPaper.findById(id);
     if (!log) return res.status(404).json({ error: "Log not found" });
     res.json(log);
   } catch (err) {

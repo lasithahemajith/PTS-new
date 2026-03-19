@@ -48,17 +48,6 @@ export default function AttendanceForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Block submission if attended=Yes but no location captured
-    if (attended === "Yes" && !location) {
-      Swal.fire({
-        icon: "warning",
-        title: "Location Required",
-        text: "Please allow location access and capture your GPS location before marking attendance as Yes.",
-      });
-      return;
-    }
-
     try {
       const payload = {
         type,
@@ -220,8 +209,7 @@ export default function AttendanceForm() {
 
         <button
           type="submit"
-          disabled={attended === "Yes" && !location}
-          className="w-full bg-indigo-600 text-white font-semibold py-3 rounded-lg hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-indigo-600 text-white font-semibold py-3 rounded-lg hover:bg-indigo-700 transition-all"
         >
           Submit Attendance
         </button>

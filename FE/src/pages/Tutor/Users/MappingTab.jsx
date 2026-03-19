@@ -91,7 +91,7 @@ export default function MappingTab() {
             <option value="">Select Mentor</option>
             {mentors.map((m) => (
               <option key={m.id} value={m.id}>
-                {m.name}{m.company ? ` (${m.company})` : ""}
+                {m.name}
               </option>
             ))}
           </select>
@@ -107,7 +107,7 @@ export default function MappingTab() {
             <option value="">Select Student</option>
             {students.map((s) => (
               <option key={s.id} value={s.id}>
-                {s.name}{s.studentIndex ? ` (${s.studentIndex})` : ""}
+                {s.name}
               </option>
             ))}
           </select>
